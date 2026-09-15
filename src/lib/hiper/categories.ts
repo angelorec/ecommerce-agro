@@ -1,15 +1,17 @@
 import { fetchHiperAPI } from './client';
 import { HiperCategory, PaginatedResponse } from './types';
 
-// Mock data for development
+// Full list of Agropecuária categories
 const MOCK_CATEGORIES: HiperCategory[] = [
-  { id: '1', name: 'Pets', slug: 'pets' },
-  { id: '2', name: 'Grandes Animais', slug: 'grandes-animais' },
-  { id: '3', name: 'Avícola', slug: 'avicola' },
-  { id: '4', name: 'Peixes e Alevinos', slug: 'peixes' },
+  { id: 'cat-pets', name: 'Pets', slug: 'pets' },
+  { id: 'cat-grandes', name: 'Grandes Animais', slug: 'grandes-animais' },
+  { id: 'cat-avicola', name: 'Avícola', slug: 'avicola' },
+  { id: 'cat-peixes', name: 'Peixes e Alevinos', slug: 'peixes' },
+  { id: 'cat-equinos', name: 'Equinos', slug: 'equinos' },
+  { id: 'cat-vacinas', name: 'Vacinas e Remédios', slug: 'vacinas-remedios' },
+  { id: 'cat-acessorios', name: 'Acessórios & Ferramentas', slug: 'acessorios' },
 ];
 
-// Set to false once HIPER_API_URL is confirmed and the real endpoint is available
 const USE_MOCKS = !process.env.HIPER_API_URL || process.env.HIPER_API_URL === 'https://api.hiper.com.br';
 
 export async function getCategories(): Promise<HiperCategory[]> {
@@ -18,12 +20,22 @@ export async function getCategories(): Promise<HiperCategory[]> {
   }
 
   try {
-    // Note: Endpoint may need adjustment based on final HIPER documentation
-    const response = await fetchHiperAPI<PaginatedResponse<HiperCategory>>('/api/v1/categorias');
-    return response.data;
+    const rawData = await fetchHiperAPI<any>('/api/v1/categorias');
+    const items = Array.isArray(rawData) ? rawData : (rawData?.data || MOCK_CATEGORIES);
+
+    return items.map((item: any) => ({
+      id: String(item.id || item.categoriaId || item.codigo || item.slug),
+      name: item.name || item.nome || item.descricao || 'Categoria',
+      slug: (item.slug || item.nome || item.name || 'categoria')
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/(^-|-$)/g, ''),
+      parentId: item.parentId || item.categoriaPaiId,
+    }));
   } catch (error) {
     console.error('Error fetching categories from HIPER:', error);
-    // Fallback to mocks even in production if API fails during initial load
     return MOCK_CATEGORIES;
   }
 }

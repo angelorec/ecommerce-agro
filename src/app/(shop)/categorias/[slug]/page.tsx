@@ -23,13 +23,12 @@ export default async function CategoryPage({ params }: Props) {
 
   const categoryName = category ? category.name : 'Ofertas da Semana';
   
-  // Note: in a real implementation we would pass the category ID or 'ofertas' flag to getProducts
-  const { data: products, total } = await getProducts(1, 20);
+  // Fetch products passing the category ID or slug to getProducts
+  const { data: rawProducts } = await getProducts(1, 50, slug === 'ofertas' ? undefined : (category?.id || slug));
   
-  // Fake filter just for presentation purposes since we are mocking
-  const filteredProducts = products.filter(p => 
-    slug === 'ofertas' ? p.promotionalPrice !== undefined : p.categoryName.toLowerCase() === category?.name.toLowerCase()
-  );
+  const filteredProducts = slug === 'ofertas' 
+    ? rawProducts.filter(p => p.promotionalPrice !== undefined)
+    : rawProducts;
 
   return (
     <div className="bg-gray-50 min-h-screen py-8">

@@ -1,10 +1,12 @@
 import { getProducts } from "@/lib/hiper/products";
+import { getCategories } from "@/lib/hiper/categories";
 import { ProductCard } from "@/components/product/ProductCard";
 import Link from "next/link";
 import { Faders, CaretDown } from "@phosphor-icons/react/dist/ssr";
 
 export default async function ProductsPage() {
-  const { data: products, total } = await getProducts(1, 20);
+  const { data: products, total } = await getProducts(1, 50);
+  const categories = await getCategories();
 
   return (
     <div className="bg-gray-50 min-h-screen py-8">
@@ -30,30 +32,17 @@ export default async function ProductsPage() {
                 <div>
                   <h3 className="font-sans font-semibold text-sm mb-3">Categorias</h3>
                   <ul className="space-y-2 text-sm text-gray-600">
-                    <li>
-                      <label className="flex items-center gap-2 cursor-pointer hover:text-brand-forest">
-                        <input type="checkbox" className="rounded text-brand-forest focus:ring-brand-forest" />
-                        Pets
-                      </label>
-                    </li>
-                    <li>
-                      <label className="flex items-center gap-2 cursor-pointer hover:text-brand-forest">
-                        <input type="checkbox" className="rounded text-brand-forest focus:ring-brand-forest" />
-                        Grandes Animais
-                      </label>
-                    </li>
-                    <li>
-                      <label className="flex items-center gap-2 cursor-pointer hover:text-brand-forest">
-                        <input type="checkbox" className="rounded text-brand-forest focus:ring-brand-forest" />
-                        Avícola
-                      </label>
-                    </li>
-                    <li>
-                      <label className="flex items-center gap-2 cursor-pointer hover:text-brand-forest">
-                        <input type="checkbox" className="rounded text-brand-forest focus:ring-brand-forest" />
-                        Peixes e Alevinos
-                      </label>
-                    </li>
+                    {categories.map((cat) => (
+                      <li key={cat.id}>
+                        <Link
+                          href={`/categorias/${cat.slug}`}
+                          className="flex items-center justify-between py-1 hover:text-brand-forest transition-colors"
+                        >
+                          <span>{cat.name}</span>
+                          <span className="text-xs text-gray-400 font-mono">→</span>
+                        </Link>
+                      </li>
+                    ))}
                   </ul>
                 </div>
 
