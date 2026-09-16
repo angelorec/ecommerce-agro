@@ -10,18 +10,8 @@ interface Props {
 
 export default async function SearchPage({ searchParams }: Props) {
   const { q = "" } = await searchParams;
-  const { data: allProducts } = await getProducts(1, 50);
-
-  const term = q.trim().toLowerCase();
-  const products: HiperProduct[] = term
-    ? allProducts.filter(
-        (p) =>
-          p.name.toLowerCase().includes(term) ||
-          p.description.toLowerCase().includes(term) ||
-          p.categoryName.toLowerCase().includes(term) ||
-          p.brand?.toLowerCase().includes(term)
-      )
-    : allProducts;
+  const term = q.trim();
+  const { data: products } = await getProducts(1, 50, undefined, term || undefined);
 
   return (
     <div className="bg-gray-50 min-h-screen py-8">
@@ -33,38 +23,32 @@ export default async function SearchPage({ searchParams }: Props) {
           <span className="text-gray-800 font-semibold">Busca</span>
         </nav>
 
-        <header className="mb-8">
-          <h1 className="font-display font-black text-2xl md:text-3xl text-brand-dark mb-2">
+        <header className="mb-10 text-center max-w-2xl mx-auto">
+          <h1 className="font-display font-black text-3xl md:text-4xl text-brand-dark mb-3">
             {q ? `Resultados para "${q}"` : "Buscar Produtos"}
           </h1>
-          <p className="text-gray-600 text-sm">
+          <p className="text-gray-500 text-base">
             {products.length > 0
-              ? `Encontramos ${products.length} produto(s) para sua busca.`
-              : "Nenhum produto encontrado. Tente buscar com outros termos."}
+              ? `Encontramos ${products.length} produto(s) incrível(is) para você.`
+              : "Nenhum produto encontrado. Que tal tentar outros termos?"}
           </p>
         </header>
 
         {/* Search input form */}
-        <form action="/busca" method="GET" className="max-w-xl mb-8 flex gap-2">
-          <div className="relative flex-1">
+        <form action="/busca" method="GET" className="max-w-2xl mx-auto mb-12 flex flex-col sm:flex-row gap-3">
+          <div className="relative flex-1 group">
             <input
               type="text"
               name="q"
               defaultValue={q}
-              placeholder="Digite o nome do produto, ração, medicamento..."
-              className="w-full h-12 pl-4 pr-10 rounded-lg border border-gray-300 focus:outline-none focus:border-brand-forest focus:ring-1 focus:ring-brand-forest text-sm bg-white"
+              placeholder="Ex: Ração para cães, arame, vacinas..."
+              className="w-full h-14 pl-12 pr-4 rounded-xl border border-gray-200 focus:outline-none focus:border-brand-forest focus:ring-2 focus:ring-brand-forest/20 text-base bg-white shadow-sm transition-all"
             />
-            <button
-              type="submit"
-              aria-label="Buscar"
-              className="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-brand-forest hover:bg-gray-100 rounded-md"
-            >
-              <MagnifyingGlass size={20} weight="bold" />
-            </button>
+            <MagnifyingGlass size={22} weight="bold" className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-brand-forest transition-colors" />
           </div>
           <button
             type="submit"
-            className="h-12 px-6 bg-brand-forest text-white font-bold text-sm rounded-lg hover:bg-brand-forest-light transition-colors"
+            className="h-14 px-8 bg-brand-forest text-white font-bold text-base rounded-xl hover:bg-brand-forest-dark transition-all shadow-[0_4px_14px_rgba(34,139,34,0.3)] hover:shadow-[0_6px_20px_rgba(34,139,34,0.4)] active:scale-95"
           >
             Buscar
           </button>
@@ -78,17 +62,19 @@ export default async function SearchPage({ searchParams }: Props) {
             ))}
           </div>
         ) : (
-          <div className="bg-white rounded-2xl p-12 text-center max-w-md mx-auto border border-gray-100 shadow-sm">
-            <MagnifyingGlass size={48} className="mx-auto text-gray-300 mb-4" />
-            <h3 className="font-bold text-lg text-brand-dark mb-2">Nenhum resultado encontrado</h3>
-            <p className="text-sm text-gray-500 mb-6">
-              Verifique se digitou corretamente ou tente buscar por termos mais genéricos.
+          <div className="bg-white rounded-3xl p-16 text-center max-w-lg mx-auto border border-gray-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
+            <div className="w-24 h-24 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-6">
+              <MagnifyingGlass size={48} weight="duotone" className="text-gray-300" />
+            </div>
+            <h3 className="font-display font-bold text-2xl text-brand-dark mb-3">Nenhum resultado</h3>
+            <p className="text-base text-gray-500 mb-8 leading-relaxed">
+              Não conseguimos encontrar nenhum produto com o termo <span className="font-bold text-gray-700">"{q}"</span>. Verifique a ortografia ou tente palavras mais genéricas.
             </p>
             <Link
               href="/produtos"
-              className="inline-flex items-center justify-center px-6 py-3 bg-brand-forest text-white font-bold text-sm rounded-xl hover:bg-brand-forest-light transition-colors"
+              className="inline-flex items-center justify-center px-8 py-4 bg-brand-forest text-white font-bold text-sm uppercase tracking-wider rounded-xl hover:bg-brand-forest-dark transition-all shadow-[0_4px_14px_rgba(34,139,34,0.3)] hover:shadow-[0_6px_20px_rgba(34,139,34,0.4)] active:scale-95"
             >
-              Ver todos os produtos
+              Navegar no Catálogo
             </Link>
           </div>
         )}

@@ -234,7 +234,7 @@ const MOCK_PRODUCTS: HiperProduct[] = [
   }
 ];
 
-const USE_MOCKS = !process.env.HIPER_API_URL || process.env.HIPER_API_URL === 'https://api.hiper.com.br';
+const USE_MOCKS = process.env.USE_HIPER_MOCK === 'true' || !process.env.HIPER_API_KEY;
 
 /**
  * Normalizes raw HIPER ERP product payload into standard HiperProduct structure
@@ -327,7 +327,7 @@ export async function getProducts(
   }
 
   try {
-    let queryParams = `?page=${page}&pageSize=${pageSize}&somenteAtivos=true&comFotos=true`;
+    let queryParams = `?page=${page}&pageSize=${pageSize}&somenteAtivos=true`;
     if (categoryIdOrSlug) queryParams += `&categoriaId=${encodeURIComponent(categoryIdOrSlug)}`;
     if (search) queryParams += `&busca=${encodeURIComponent(search)}`;
 

@@ -16,32 +16,37 @@ export function ProductCard({ product }: ProductCardProps) {
   const hasDiscount = product.promotionalPrice && product.promotionalPrice < product.price;
 
   return (
-    <div className="group bg-white border border-gray-200 rounded-lg overflow-hidden hover:border-brand-forest hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-all flex flex-col h-full relative">
+    <div className="group bg-white border border-gray-100 rounded-2xl overflow-hidden hover:border-brand-forest/30 hover:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.1)] hover:-translate-y-1 transition-all duration-300 flex flex-col h-full relative">
 
       {/* Badges */}
       <div className="absolute top-2 left-2 z-10 flex flex-col gap-1">
         {hasDiscount && (
-          <span className="bg-brand-red text-white text-[10px] font-bold uppercase px-2 py-1 rounded shadow-sm">
+          <span className="bg-brand-red text-white text-[10px] font-extrabold uppercase px-2.5 py-1 rounded-full shadow-sm tracking-wide">
             Oferta
           </span>
         )}
         {product.stock > 0 && product.stock <= 5 && (
-          <span className="bg-brand-gold text-brand-dark text-[10px] font-bold uppercase px-2 py-1 rounded shadow-sm">
+          <span className="bg-brand-gold text-brand-dark text-[10px] font-extrabold uppercase px-2.5 py-1 rounded-full shadow-sm tracking-wide">
             Últimas {product.stock}
           </span>
         )}
       </div>
 
-      <Link href={`/produtos/${product.id}`} className="relative h-48 w-full bg-gray-50 flex-shrink-0">
-        <div className="absolute inset-0 flex items-center justify-center opacity-5">
-          <span className="font-display font-black text-6xl text-brand-forest">RP</span>
+      <Link href={`/produtos/${product.id}`} className="relative h-56 w-full bg-gradient-to-br from-gray-50 to-gray-100 flex-shrink-0 flex items-center justify-center overflow-hidden">
+        {/* Placeholder elegante caso não haja imagem */}
+        <div className="absolute inset-0 flex items-center justify-center z-0">
+          <div className="w-24 h-24 rounded-full bg-brand-forest/5 flex items-center justify-center">
+             <span className="font-display font-black text-4xl text-brand-forest/20 tracking-tighter">RP</span>
+          </div>
         </div>
-        <Image
-          src={product.images[0] || '/images/placeholder.jpg'}
-          alt={product.name}
-          fill
-          className="object-contain p-4 group-hover:scale-105 transition-transform duration-300 relative z-10"
-        />
+        {product.images[0] && !product.images[0].includes('placeholder') && (
+          <Image
+            src={product.images[0]}
+            alt={product.name}
+            fill
+            className="object-contain p-6 group-hover:scale-110 transition-transform duration-500 ease-out relative z-10 drop-shadow-sm mix-blend-multiply"
+          />
+        )}
       </Link>
 
       <div className="p-4 flex flex-col flex-grow">
@@ -52,8 +57,8 @@ export function ProductCard({ product }: ProductCardProps) {
           {product.categoryName}
         </Link>
 
-        <Link href={`/produtos/${product.id}`} className="group-hover:text-brand-forest transition-colors">
-          <h3 className="font-sans font-medium text-sm text-brand-dark line-clamp-2 leading-snug mb-2">
+        <Link href={`/produtos/${product.id}`} className="group-hover:text-brand-forest transition-colors mt-1">
+          <h3 className="font-sans font-semibold text-sm text-brand-dark line-clamp-2 leading-relaxed">
             {product.name}
           </h3>
         </Link>
@@ -81,10 +86,10 @@ export function ProductCard({ product }: ProductCardProps) {
               e.preventDefault();
               addItem(product);
             }}
-            className="w-10 h-10 rounded-full bg-brand-forest text-white flex items-center justify-center hover:bg-brand-forest-dark active:scale-90 transition-all flex-shrink-0 shadow-md shadow-brand-forest/20"
+            className="w-11 h-11 rounded-xl bg-brand-forest text-white flex items-center justify-center hover:bg-brand-forest-dark active:scale-95 transition-all flex-shrink-0 shadow-[0_4px_14px_rgba(34,139,34,0.3)] hover:shadow-[0_6px_20px_rgba(34,139,34,0.4)]"
             aria-label={`Adicionar ${product.name} ao carrinho`}
           >
-            <ShoppingCart size={20} weight="fill" />
+            <ShoppingCart size={22} weight="fill" />
           </button>
         </div>
       </div>

@@ -2,24 +2,34 @@ import { HeroBanner } from "@/components/home/HeroBanner";
 import { CategoryGrid } from "@/components/home/CategoryGrid";
 import { TrustBar } from "@/components/home/TrustBar";
 import { ProductCard } from "@/components/product/ProductCard";
-import { getFeaturedProducts } from "@/lib/hiper/products";
+import { OffersCarousel } from "@/components/home/OffersCarousel";
+import { getFeaturedProducts, getProducts } from "@/lib/hiper/products";
 
 export default async function Home() {
   const featuredProducts = await getFeaturedProducts();
+  
+  // Buscar mais produtos para encontrar ofertas (idealmente a API teria um filtro, mas fazemos um fetch maior aqui)
+  const allProductsRes = await getProducts(1, 100);
+  const offerProducts = allProductsRes.data.filter(p => p.promotionalPrice && p.promotionalPrice < p.price);
 
   return (
     <>
       <HeroBanner />
       <CategoryGrid />
       
+      {/* Carrossel de Ofertas */}
+      {offerProducts.length > 0 && (
+        <OffersCarousel products={offerProducts} />
+      )}
+      
       {/* Featured Products */}
-      <section className="py-16 bg-brand-beige/30">
+      <section className="py-20 bg-brand-beige/20">
         <div className="container mx-auto px-4 max-w-[1400px]">
-          <div className="flex items-center justify-between mb-8">
-            <h2 className="text-3xl font-display font-black text-brand-dark uppercase tracking-tight">
+          <div className="flex items-center justify-between mb-10">
+            <h2 className="text-3xl md:text-4xl font-display font-black text-brand-dark tracking-tight">
               Destaques do <span className="text-brand-forest">Rancho</span>
             </h2>
-            <a href="/produtos" className="text-sm font-bold text-brand-forest hover:text-brand-forest-dark transition-colors uppercase">
+            <a href="/produtos" className="hidden md:flex items-center gap-2 text-sm font-bold text-brand-forest hover:text-brand-forest-dark transition-colors uppercase tracking-wider bg-white px-5 py-2.5 rounded-full shadow-sm hover:shadow-md border border-brand-forest/10">
               Ver todos
             </a>
           </div>

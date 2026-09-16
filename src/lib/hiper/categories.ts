@@ -12,7 +12,7 @@ const MOCK_CATEGORIES: HiperCategory[] = [
   { id: 'cat-acessorios', name: 'Acessórios & Ferramentas', slug: 'acessorios' },
 ];
 
-const USE_MOCKS = !process.env.HIPER_API_URL || process.env.HIPER_API_URL === 'https://api.hiper.com.br';
+const USE_MOCKS = process.env.USE_HIPER_MOCK === 'true' || !process.env.HIPER_API_KEY;
 
 export async function getCategories(): Promise<HiperCategory[]> {
   if (USE_MOCKS) {
