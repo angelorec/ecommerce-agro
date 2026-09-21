@@ -32,7 +32,7 @@ export function ProductCard({ product }: ProductCardProps) {
         )}
       </div>
 
-      <Link href={`/produtos/${product.id}`} className="relative h-56 w-full bg-gradient-to-br from-gray-50 to-gray-100 flex-shrink-0 flex items-center justify-center overflow-hidden">
+      <Link href={`/produtos/${product.id}`} className="relative h-44 sm:h-56 w-full bg-gradient-to-br from-gray-50 to-gray-100 flex-shrink-0 flex items-center justify-center overflow-hidden">
         {/* Placeholder elegante caso não haja imagem */}
         <div className="absolute inset-0 flex items-center justify-center z-0">
           <div className="w-24 h-24 rounded-full bg-brand-forest/5 flex items-center justify-center">

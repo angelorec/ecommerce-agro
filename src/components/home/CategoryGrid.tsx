@@ -22,9 +22,9 @@ export async function CategoryGrid() {
             <Link
               key={category.id}
               href={`/categorias/${category.slug}`}
-              className="flex flex-col items-center gap-3 group w-[90px] sm:w-[110px]"
+              className="flex flex-col items-center gap-3 group w-[80px] sm:w-[110px]"
             >
-              <div className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-full border-2 border-gray-200 group-hover:border-brand-gold shadow-sm group-hover:shadow-md bg-gray-50 transition-all duration-300 group-hover:-translate-y-2 overflow-hidden">
+              <div className="relative w-16 h-16 sm:w-24 sm:h-24 rounded-full border-2 border-gray-200 group-hover:border-brand-gold shadow-sm group-hover:shadow-md bg-gray-50 transition-all duration-300 group-hover:-translate-y-2 overflow-hidden">
                 <Image
                   src={CATEGORY_ICONS[category.slug] ?? "/images/categories/pets.png"}
                   alt={category.name}
@@ -38,16 +38,16 @@ export async function CategoryGrid() {
             </Link>
           ))}
 
-          {/* Offers — always shown */}
+          {/* All Products — always shown */}
           <Link
-            href="/ofertas"
-            className="flex flex-col items-center gap-3 group w-[90px] sm:w-[110px]"
+            href="/produtos"
+            className="flex flex-col items-center gap-3 group w-[80px] sm:w-[110px]"
           >
-            <div className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-full border-2 border-brand-red/40 group-hover:border-brand-red shadow-sm group-hover:shadow-md bg-red-50 transition-all duration-300 group-hover:-translate-y-2 flex items-center justify-center">
-              <span className="text-4xl">🔥</span>
+            <div className="relative w-16 h-16 sm:w-24 sm:h-24 rounded-full border-2 border-brand-forest/40 group-hover:border-brand-forest shadow-sm group-hover:shadow-md bg-brand-forest/5 transition-all duration-300 group-hover:-translate-y-2 flex items-center justify-center">
+              <span className="text-4xl">🛍️</span>
             </div>
-            <span className="font-display font-bold text-xs sm:text-sm text-center text-brand-red group-hover:opacity-80 transition-opacity">
-              Ofertas
+            <span className="font-display font-bold text-xs sm:text-sm text-center text-brand-forest group-hover:opacity-80 transition-opacity">
+              Todos os Produtos
             </span>
           </Link>
         </div>

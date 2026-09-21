@@ -102,6 +102,21 @@ export function Header() {
         </div>
       </div>
 
+      {/* Mobile Search */}
+      <div className="md:hidden px-4 pb-3">
+        <form action="/busca" method="GET" className="relative">
+          <input
+            type="text"
+            name="q"
+            placeholder="O que você está procurando?"
+            className="w-full h-11 pl-4 pr-12 rounded-full border border-gray-300 focus:outline-none focus:border-brand-forest focus:ring-1 focus:ring-brand-forest transition-colors bg-gray-50 text-sm"
+          />
+          <button type="submit" aria-label="Buscar" className="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-brand-forest hover:bg-gray-100 rounded-full transition-colors">
+            <MagnifyingGlass size={20} weight="bold" />
+          </button>
+        </form>
+      </div>
+
       {/* Desktop category navigation */}
       <nav className="hidden md:block border-t border-gray-100 bg-white">
         <div className="container mx-auto px-4">
@@ -119,8 +134,8 @@ export function Header() {
               </li>
             ))}
             <li>
-              <Link href="/ofertas" className="text-sm font-bold text-brand-red hover:opacity-80 transition-opacity uppercase tracking-wide">
-                🔥 Ofertas
+              <Link href="/produtos" className="text-sm font-extrabold text-brand-forest hover:opacity-80 transition-opacity uppercase tracking-wide">
+                Todos os Produtos
               </Link>
             </li>
           </ul>

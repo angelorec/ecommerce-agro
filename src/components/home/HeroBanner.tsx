@@ -4,7 +4,7 @@ import { ArrowRight, WhatsappLogo } from "@phosphor-icons/react/dist/ssr";
 
 export function HeroBanner() {
   return (
-    <section className="relative w-full h-[600px] sm:h-[500px] md:h-[600px] overflow-hidden bg-brand-dark">
+    <section className="relative w-full min-h-[450px] md:min-h-[600px] h-[60vh] overflow-hidden bg-brand-dark">
       {/* Background Image */}
       <div className="absolute inset-0">
         <Image
@@ -27,7 +27,7 @@ export function HeroBanner() {
             Promoção Mês de Aniversário
           </div>
           
-          <h1 className="text-4xl sm:text-5xl md:text-6xl font-display font-black text-white leading-[1.1] tracking-tight">
+          <h1 className="text-3xl sm:text-5xl md:text-6xl font-display font-black text-white leading-[1.1] tracking-tight">
             Tudo para o <br />
             <span className="text-brand-gold">Produtor Rural!</span>
           </h1>
@@ -39,7 +39,7 @@ export function HeroBanner() {
           <div className="flex flex-col sm:flex-row gap-4 pt-4">
             <Link 
               href="/ofertas" 
-              className="inline-flex items-center justify-center gap-2 bg-brand-forest hover:bg-brand-forest-light text-white font-bold text-lg px-8 py-4 rounded-md transition-all active:scale-[0.98] shadow-[0_4px_14px_0_rgba(45,106,30,0.39)]"
+              className="inline-flex items-center justify-center gap-2 bg-brand-forest hover:bg-brand-forest-light text-white font-bold text-lg px-6 py-3 sm:px-8 sm:py-4 rounded-md transition-all active:scale-[0.98] shadow-[0_4px_14px_0_rgba(45,106,30,0.39)]"
             >
               Ver Ofertas
               <ArrowRight size={20} weight="bold" />
@@ -49,7 +49,7 @@ export function HeroBanner() {
               href="https://wa.me/5549998142661" 
               target="_blank" 
               rel="noopener noreferrer"
-              className="inline-flex items-center justify-center gap-2 bg-brand-gold hover:bg-brand-gold-light text-brand-dark font-bold text-lg px-8 py-4 rounded-md transition-all active:scale-[0.98] shadow-lg"
+              className="inline-flex items-center justify-center gap-2 bg-brand-gold hover:bg-brand-gold-light text-brand-dark font-bold text-lg px-6 py-3 sm:px-8 sm:py-4 rounded-md transition-all active:scale-[0.98] shadow-lg"
             >
               <WhatsappLogo size={24} weight="fill" />
               Peça Agora

@@ -31,7 +31,7 @@ export function TrustBar() {
           {features.map((feature, idx) => (
             <div key={idx} className="flex items-center gap-3 md:gap-4 px-2 justify-center md:justify-start">
               <div className="shrink-0">
-                <feature.icon size={40} weight="fill" className="text-brand-gold" />
+                <feature.icon weight="fill" className="text-brand-gold w-8 h-8 md:w-10 md:h-10" />
               </div>
               <div className="flex flex-col text-white uppercase font-display font-bold text-[11px] sm:text-sm tracking-wide">
                 <span>{feature.title}</span>
