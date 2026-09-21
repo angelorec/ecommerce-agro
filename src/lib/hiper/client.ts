@@ -1,18 +1,18 @@
-const HIPER_API_URL = process.env.HIPER_API_URL || 'https://api.hiper.com.br';
-const HIPER_API_KEY = process.env.HIPER_API_KEY;
+const HIPER_API_URL = process.env.HIPER_API_URL || 'https://ms-ecommerce.hiper.com.br';
+const HIPER_API_TOKEN = process.env.HIPER_API_TOKEN;
 
 export async function fetchHiperAPI<T>(
   endpoint: string,
   options: RequestInit = {}
 ): Promise<T> {
-  if (!HIPER_API_KEY) {
-    throw new Error('HIPER_API_KEY is not defined in environment variables');
+  if (!HIPER_API_TOKEN) {
+    throw new Error('HIPER_API_TOKEN is not defined in environment variables');
   }
 
   const url = `${HIPER_API_URL}${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`;
   
   const headers = new Headers(options.headers);
-  headers.set('Authorization', `Bearer ${HIPER_API_KEY}`);
+  headers.set('Authorization', `Bearer ${HIPER_API_TOKEN}`);
   headers.set('Content-Type', 'application/json');
   headers.set('Accept', 'application/json');
 
@@ -25,8 +25,12 @@ export async function fetchHiperAPI<T>(
     const response = await fetch(url, config);
 
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(`Hiper API Error: ${response.status} ${response.statusText} - ${JSON.stringify(errorData)}`);
+      const errorText = await response.text().catch(() => '');
+      let errorData: any = {};
+      try { errorData = JSON.parse(errorText); } catch { errorData = { raw: errorText }; }
+      throw new Error(
+        `Hiper API Error: ${response.status} ${response.statusText} - ${JSON.stringify(errorData)}`
+      );
     }
 
     // For 204 No Content

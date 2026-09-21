@@ -1,5 +1,5 @@
 import { fetchHiperAPI } from './client';
-import { HiperProduct, PaginatedResponse } from './types';
+import { HiperProduct, HiperRawProduct, PaginatedResponse } from './types';
 
 // Complete agro-rancho products mock catalog with high quality images
 const MOCK_PRODUCTS: HiperProduct[] = [
@@ -234,52 +234,72 @@ const MOCK_PRODUCTS: HiperProduct[] = [
   }
 ];
 
-const USE_MOCKS = process.env.USE_HIPER_MOCK === 'true' || !process.env.HIPER_API_KEY;
+const USE_MOCKS = process.env.USE_HIPER_MOCK === 'true' || !process.env.HIPER_API_TOKEN;
 
 /**
- * Normalizes raw HIPER ERP product payload into standard HiperProduct structure
+ * Normalizes raw HIPER ERP product payload into our internal HiperProduct structure.
+ * Maps exact fields from the HIPER /produtos/pontoDeSincronizacao response.
  */
-function normalizeHiperProduct(item: any): HiperProduct {
-  const rawId = String(item.id || item.produtoId || item.codigoHiper || item.codigo || Math.random());
-  const rawName = item.name || item.nome || item.descricao || item.titulo || 'Produto Rancho';
-  const rawPrice = Number(item.price || item.preco || item.precoVenda || item.valor || 0);
-  const rawPromoPrice = item.promotionalPrice || item.precoPromocional || item.precoOferta || item.valorPromocional;
-  const rawStock = Number(item.stock || item.estoque || item.saldoEstoque || item.quantidade || 0);
-
-  // Parse Images
-  let images: string[] = [];
-  if (Array.isArray(item.images) && item.images.length > 0) {
-    images = item.images.map((img: any) => (typeof img === 'string' ? img : img.url || img.caminho));
-  } else if (Array.isArray(item.fotos) && item.fotos.length > 0) {
-    images = item.fotos.map((img: any) => (typeof img === 'string' ? img : img.url || img.caminho));
-  } else if (item.imagemPrincipal || item.fotoPrincipal || item.imagemUrl) {
-    images = [item.imagemPrincipal || item.fotoPrincipal || item.imagemUrl];
-  } else {
-    images = ['https://images.unsplash.com/photo-1589924691995-400dc9ecc119?w=800&q=80'];
+function normalizeHiperProduct(raw: HiperRawProduct): HiperProduct {
+  // Build images array: main image + additional images
+  const images: string[] = [];
+  if (raw.imagem) {
+    images.push(raw.imagem);
+  }
+  if (Array.isArray(raw.imagensAdicionais)) {
+    for (const img of raw.imagensAdicionais) {
+      if (img?.imagem) images.push(img.imagem);
+    }
+  }
+  if (images.length === 0) {
+    images.push('https://images.unsplash.com/photo-1589924691995-400dc9ecc119?w=800&q=80');
   }
 
-  // Parse Category
-  const catObj = item.category || item.categoria || {};
-  const catName = typeof catObj === 'string' ? catObj : catObj.nome || item.categoryName || item.categoriaNome || 'Geral';
-  const catId = typeof catObj === 'object' ? (catObj.id || catObj.categoriaId || 'cat-geral') : (item.categoryId || 'cat-geral');
+  // Map variations
+  const variations = Array.isArray(raw.variacao)
+    ? raw.variacao.map((v) => ({
+        id: v.id,
+        active: v.variacaoAtiva,
+        barcode: v.codigoDeBarras,
+        code: v.codigo,
+        variationTypeA: v.tipoVariacaoA,
+        variationNameA: v.nomeVariacaoA,
+        variationTypeB: v.tipoVariacaoB,
+        variationNameB: v.nomeVariacaoB,
+        stock: v.quantidadeEmEstoque,
+      }))
+    : undefined;
+
+  // Map wholesale prices
+  const wholesalePrices = raw.precoAtacado?.precos?.map((p) => ({
+    unitPrice: p.precoUnitario,
+    quantity: p.quantidade,
+  }));
 
   return {
-    id: rawId,
-    name: rawName,
-    description: item.description || item.descricaoCurta || item.detalhes || rawName,
-    price: rawPrice > 0 ? rawPrice : 99.90,
-    promotionalPrice: rawPromoPrice ? Number(rawPromoPrice) : undefined,
-    stock: rawStock,
-    sku: item.sku || item.codigoBarras || item.codigoRef || `SKU-${rawId}`,
-    categoryId: String(catId),
-    categoryName: String(catName),
+    id: raw.id,
+    name: raw.nome || 'Produto Rancho',
+    description: raw.descricao || raw.nome || '',
+    price: raw.preco || 0,
+    stock: raw.quantidadeEmEstoque || 0,
+    sku: raw.codigoDeBarras || String(raw.codigo),
+    categoryId: raw.categoriaDoProdutoId || 'cat-geral',
+    categoryName: raw.categoria || 'Geral',
     images,
-    weight: Number(item.weight || item.peso || 1),
-    brand: typeof item.brand === 'object' ? (item.brand.nome || 'Rancho') : (item.brand || item.marca || 'Rancho dos Pinheiros'),
-    isActive: item.isActive !== undefined ? Boolean(item.isActive) : true,
+    weight: raw.peso || 0,
+    brand: raw.marca || 'Rancho dos Pinheiros',
+    isActive: raw.ativo && !raw.removido,
+    unit: raw.unidade,
+    variations,
+    wholesaleActive: raw.atacadoAtivo,
+    wholesalePrices,
   };
 }
 
+/**
+ * Fetches products from HIPER ERP using the pontoDeSincronizacao endpoint.
+ * Falls back to mock data if API is unavailable or mocks are enabled.
+ */
 export async function getProducts(
   page = 1,
   pageSize = 50,
@@ -287,11 +307,31 @@ export async function getProducts(
   search?: string
 ): Promise<PaginatedResponse<HiperProduct>> {
   if (USE_MOCKS) {
-    let filtered = [...MOCK_PRODUCTS];
+    return getFilteredMocks(page, pageSize, categoryIdOrSlug, search);
+  }
 
+  try {
+    // HIPER returns all products since a sync point; we start from 0 to get everything
+    const rawResponse = await fetchHiperAPI<HiperRawProduct[] | any>(
+      '/api/v1/produtos/pontoDeSincronizacao?pontoDeSincronizacao=0'
+    );
+
+    // The response may be an array directly or wrapped
+    const rawList: HiperRawProduct[] = Array.isArray(rawResponse)
+      ? rawResponse
+      : Array.isArray(rawResponse?.data)
+      ? rawResponse.data
+      : [];
+
+    // Filter out removed and inactive products
+    let products = rawList
+      .filter((item) => !item.removido && item.ativo)
+      .map(normalizeHiperProduct);
+
+    // Client-side filtering since HIPER sync endpoint doesn't support query params
     if (categoryIdOrSlug) {
       const target = categoryIdOrSlug.toLowerCase();
-      filtered = filtered.filter(
+      products = products.filter(
         (p) =>
           p.categoryId.toLowerCase() === target ||
           p.categoryName.toLowerCase().includes(target) ||
@@ -305,7 +345,7 @@ export async function getProducts(
 
     if (search) {
       const s = search.toLowerCase();
-      filtered = filtered.filter(
+      products = products.filter(
         (p) =>
           p.name.toLowerCase().includes(s) ||
           p.description.toLowerCase().includes(s) ||
@@ -314,68 +354,21 @@ export async function getProducts(
       );
     }
 
+    // Paginate
+    const total = products.length;
     const start = (page - 1) * pageSize;
-    const paginated = filtered.slice(start, start + pageSize);
+    const paginated = products.slice(start, start + pageSize);
 
     return {
       data: paginated,
-      total: filtered.length,
+      total,
       page,
       pageSize,
-      totalPages: Math.ceil(filtered.length / pageSize) || 1,
-    };
-  }
-
-  try {
-    let queryParams = `?page=${page}&pageSize=${pageSize}&somenteAtivos=true`;
-    if (categoryIdOrSlug) queryParams += `&categoriaId=${encodeURIComponent(categoryIdOrSlug)}`;
-    if (search) queryParams += `&busca=${encodeURIComponent(search)}`;
-
-    const rawResponse = await fetchHiperAPI<any>(`/api/v1/produtos${queryParams}`);
-
-    const rawList = Array.isArray(rawResponse)
-      ? rawResponse
-      : Array.isArray(rawResponse?.data)
-      ? rawResponse.data
-      : Array.isArray(rawResponse?.produtos)
-      ? rawResponse.produtos
-      : MOCK_PRODUCTS;
-
-    const products = rawList.map(normalizeHiperProduct);
-
-    return {
-      data: products,
-      total: rawResponse?.total || rawResponse?.totalItens || products.length,
-      page,
-      pageSize,
-      totalPages: rawResponse?.totalPages || Math.ceil(products.length / pageSize) || 1,
+      totalPages: Math.ceil(total / pageSize) || 1,
     };
   } catch (error) {
     console.error('Error fetching products from HIPER:', error);
-
-    // Filter mock as fallback
-    let filtered = [...MOCK_PRODUCTS];
-    if (categoryIdOrSlug) {
-      const target = categoryIdOrSlug.toLowerCase();
-      filtered = filtered.filter(
-        (p) =>
-          p.categoryId.toLowerCase() === target ||
-          p.categoryName.toLowerCase().includes(target) ||
-          p.categoryName
-            .toLowerCase()
-            .normalize('NFD')
-            .replace(/[\u0300-\u036f]/g, '')
-            .replace(/[^a-z0-9]+/g, '-') === target
-      );
-    }
-
-    return {
-      data: filtered,
-      total: filtered.length,
-      page: 1,
-      pageSize,
-      totalPages: 1,
-    };
+    return getFilteredMocks(page, pageSize, categoryIdOrSlug, search);
   }
 }
 
@@ -391,11 +384,64 @@ export async function getProductBySlug(id: string): Promise<HiperProduct | null>
   }
 
   try {
-    const raw = await fetchHiperAPI<any>(`/api/v1/produtos/${id}`);
-    if (!raw) return null;
-    return normalizeHiperProduct(raw);
+    // Fetch all products and find by ID since HIPER doesn't have a single-product endpoint
+    const allProducts = await fetchHiperAPI<HiperRawProduct[] | any>(
+      '/api/v1/produtos/pontoDeSincronizacao?pontoDeSincronizacao=0'
+    );
+
+    const rawList: HiperRawProduct[] = Array.isArray(allProducts) ? allProducts : (allProducts?.data || []);
+    const found = rawList.find((p) => p.id === id || String(p.codigo) === id || p.codigoDeBarras === id);
+
+    if (!found) return null;
+    return normalizeHiperProduct(found);
   } catch (error) {
     console.error(`Error fetching product ${id} from HIPER:`, error);
     return MOCK_PRODUCTS.find((p) => p.id === id) || null;
   }
+}
+
+/** Filter and paginate mock products */
+function getFilteredMocks(
+  page: number,
+  pageSize: number,
+  categoryIdOrSlug?: string,
+  search?: string
+): PaginatedResponse<HiperProduct> {
+  let filtered = [...MOCK_PRODUCTS];
+
+  if (categoryIdOrSlug) {
+    const target = categoryIdOrSlug.toLowerCase();
+    filtered = filtered.filter(
+      (p) =>
+        p.categoryId.toLowerCase() === target ||
+        p.categoryName.toLowerCase().includes(target) ||
+        p.categoryName
+          .toLowerCase()
+          .normalize('NFD')
+          .replace(/[\u0300-\u036f]/g, '')
+          .replace(/[^a-z0-9]+/g, '-') === target
+    );
+  }
+
+  if (search) {
+    const s = search.toLowerCase();
+    filtered = filtered.filter(
+      (p) =>
+        p.name.toLowerCase().includes(s) ||
+        p.description.toLowerCase().includes(s) ||
+        p.brand?.toLowerCase().includes(s) ||
+        p.categoryName.toLowerCase().includes(s)
+    );
+  }
+
+  const start = (page - 1) * pageSize;
+  const paginated = filtered.slice(start, start + pageSize);
+
+  return {
+    data: paginated,
+    total: filtered.length,
+    page,
+    pageSize,
+    totalPages: Math.ceil(filtered.length / pageSize) || 1,
+  };
 }

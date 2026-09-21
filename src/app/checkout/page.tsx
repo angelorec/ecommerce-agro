@@ -53,13 +53,59 @@ export default function CheckoutPage() {
   const handleCheckout = async () => {
     setIsProcessing(true);
     
-    // Simulate API request and payment processing
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    // Play sound and redirect
-    playSuccess();
-    clearCart();
-    router.push('/checkout/sucesso');
+    try {
+      const response = await fetch('/api/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          customer: {
+            nome: formData.nome,
+            email: formData.email,
+            cpf: formData.cpf,
+            telefone: formData.telefone || '',
+          },
+          address: formData.metodoEntrega === 'retirada' ? null : {
+            cep: formData.cep,
+            logradouro: formData.endereco,
+            numero: formData.numero,
+            complemento: '',
+            bairro: formData.bairro,
+            cidade: formData.cidade,
+            estado: formData.estado,
+            codigoIbge: 0,
+          },
+          paymentMethod: formData.metodoPagamento,
+          parcelas: 1,
+          shippingCost: frete,
+          pickupInStore: formData.metodoEntrega === 'retirada',
+          items: items.map(item => ({
+            productId: item.product.id,
+            name: item.product.name,
+            sku: item.product.sku,
+            quantity: item.quantity,
+            unitPrice: item.product.promotionalPrice ?? item.product.price,
+            originalPrice: item.product.price,
+            images: item.product.images,
+          })),
+          observacao: '',
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || data.details?.join(', ') || 'Erro ao processar pedido');
+      }
+
+      playSuccess();
+      clearCart();
+      router.push('/checkout/sucesso');
+    } catch (error: any) {
+      console.error('Checkout error:', error);
+      alert(`Erro ao finalizar pedido: ${error.message}`);
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   if (!mounted) return null;

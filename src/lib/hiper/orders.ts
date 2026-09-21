@@ -1,92 +1,164 @@
 import { fetchHiperAPI } from './client';
+import {
+  HiperOrderPayload,
+  HiperOrderResponse,
+  HiperOrderStatusResponse,
+  HiperCancelOrderResponse,
+  HIPER_PAYMENT_METHODS,
+} from './types';
 import { CartItem } from '../cart';
 
-export interface HiperOrderCustomer {
-  name: string;
+// ── Public Interfaces for the Checkout Flow ─────────────────────────
+
+export interface OrderCustomer {
+  nome: string;
   email: string;
-  cpfCnpj: string;
-  phone: string;
+  cpf: string;
+  telefone: string;
 }
 
-export interface HiperOrderAddress {
+export interface OrderAddress {
   cep: string;
-  street: string;
-  number: string;
-  neighborhood: string;
-  city: string;
-  state: string;
+  logradouro: string;
+  numero: string;
+  complemento?: string;
+  bairro: string;
+  cidade: string;
+  estado: string;
+  codigoIbge?: number;
 }
 
-export interface HiperOrderPayload {
-  customer: HiperOrderCustomer;
-  deliveryAddress?: HiperOrderAddress;
-  pickupInStore: boolean;
-  paymentMethod: 'pix' | 'credit_card' | 'boleto';
-  items: Array<{
-    productId: string;
-    sku: string;
-    quantity: number;
-    unitPrice: number;
-  }>;
-  shippingCost: number;
-  notes?: string;
-}
+export type PaymentMethod = 'pix' | 'cartao' | 'boleto' | 'dinheiro';
 
-export interface HiperOrder {
-  id: string;
-  orderNumber: string;
-  status: 'pending' | 'confirmed' | 'shipped' | 'delivered' | 'cancelled';
-  total: number;
-  createdAt: string;
-}
+// ── Order Creation ──────────────────────────────────────────────────
 
-export async function createOrder(
+/**
+ * Creates an order on HIPER ERP.
+ * Endpoint: POST /api/v1/pedido-de-venda/
+ * 
+ * Maps our checkout form data into the exact HIPER payload structure.
+ */
+export async function createHiperOrder(
   cartItems: CartItem[],
-  customer: HiperOrderCustomer,
-  options: {
-    deliveryAddress?: HiperOrderAddress;
-    pickupInStore?: boolean;
-    paymentMethod: 'pix' | 'credit_card' | 'boleto';
-    shippingCost: number;
-  }
-): Promise<HiperOrder> {
-  const payload: HiperOrderPayload = {
-    customer,
-    deliveryAddress: options.deliveryAddress,
-    pickupInStore: options.pickupInStore ?? false,
-    paymentMethod: options.paymentMethod,
-    shippingCost: options.shippingCost,
-    items: cartItems.map((item) => ({
-      productId: item.product.id,
-      sku: item.product.sku,
-      quantity: item.quantity,
-      unitPrice: item.product.promotionalPrice ?? item.product.price,
-    })),
-    notes: `Pedido via e-commerce Rancho dos Pinheiros`,
+  customer: OrderCustomer,
+  address: OrderAddress | null,
+  paymentMethod: PaymentMethod,
+  shippingCost: number,
+  parcelas = 1,
+  observacao = ''
+): Promise<HiperOrderResponse> {
+  // Calculate totals
+  const itemsTotal = cartItems.reduce((sum, item) => {
+    const unitPrice = item.product.promotionalPrice ?? item.product.price;
+    return sum + unitPrice * item.quantity;
+  }, 0);
+
+  // Apply PIX discount if applicable
+  const totalWithDiscount = paymentMethod === 'pix' 
+    ? (itemsTotal + shippingCost) * 0.95 
+    : itemsTotal + shippingCost;
+
+  // Map payment method to HIPER ID
+  const hiperPaymentId = mapPaymentMethod(paymentMethod);
+
+  // Build the address objects — use billing = delivery for simplicity
+  const addressPayload = address ? {
+    bairro: address.bairro,
+    cep: address.cep.replace(/\D/g, ''),
+    codigoIbge: address.codigoIbge || 0,
+    complemento: address.complemento || '',
+    logradouro: address.logradouro,
+    numero: address.numero,
+  } : {
+    bairro: '',
+    cep: '',
+    codigoIbge: 0,
+    complemento: '',
+    logradouro: '',
+    numero: '',
   };
 
-  // Creates the order — HIPER auto-creates the customer if they don't exist
-  return await fetchHiperAPI<HiperOrder>('/api/v1/pedidos', {
+  const payload: HiperOrderPayload = {
+    cliente: {
+      documento: customer.cpf.replace(/\D/g, ''),
+      email: customer.email,
+      inscricaoEstadual: '',
+      nomeDoCliente: customer.nome,
+      nomeFantasia: '',
+    },
+    enderecoDeCobranca: addressPayload,
+    enderecoDeEntrega: addressPayload,
+    itens: cartItems.map((item) => {
+      const unitPrice = item.product.promotionalPrice ?? item.product.price;
+      return {
+        produtoId: item.product.id,
+        quantidade: item.quantity,
+        precoUnitarioBruto: item.product.price,
+        precoUnitarioLiquido: unitPrice,
+      };
+    }),
+    meiosDePagamento: [
+      {
+        idMeioDePagamento: hiperPaymentId,
+        parcelas,
+        valor: totalWithDiscount,
+      },
+    ],
+    numeroPedidoDeVenda: '',
+    observacaoDoPedidoDeVenda: observacao || `Pedido via e-commerce Rancho dos Pinheiros`,
+    valorDoFrete: shippingCost,
+  };
+
+  return await fetchHiperAPI<HiperOrderResponse>('/api/v1/pedido-de-venda/', {
     method: 'POST',
     body: JSON.stringify(payload),
   });
 }
 
-export async function getOrder(orderId: string): Promise<HiperOrder | null> {
+// ── Order Consultation ──────────────────────────────────────────────
+
+/**
+ * Consults an order's status and events on HIPER ERP.
+ * Endpoint: GET /api/v1/pedido-de-venda/eventos/{id}
+ */
+export async function getOrderStatus(orderId: string): Promise<HiperOrderStatusResponse | null> {
   try {
-    return await fetchHiperAPI<HiperOrder>(`/api/v1/pedidos/${orderId}`);
+    return await fetchHiperAPI<HiperOrderStatusResponse>(
+      `/api/v1/pedido-de-venda/eventos/${encodeURIComponent(orderId)}`
+    );
   } catch (error) {
     console.error(`[HIPER Orders] Failed to get order ${orderId}:`, error);
     return null;
   }
 }
 
-export async function cancelOrder(orderId: string): Promise<boolean> {
-  try {
-    await fetchHiperAPI(`/api/v1/pedidos/${orderId}/cancelar`, { method: 'POST' });
-    return true;
-  } catch (error) {
-    console.error(`[HIPER Orders] Failed to cancel order ${orderId}:`, error);
-    return false;
+// ── Order Cancellation ──────────────────────────────────────────────
+
+/**
+ * Cancels an order on HIPER ERP.
+ * Endpoint: PUT /api/v1/pedido-de-venda/cancelar/{id}
+ */
+export async function cancelOrder(orderId: string): Promise<HiperCancelOrderResponse> {
+  return await fetchHiperAPI<HiperCancelOrderResponse>(
+    `/api/v1/pedido-de-venda/cancelar/${encodeURIComponent(orderId)}`,
+    { method: 'PUT' }
+  );
+}
+
+// ── Helpers ─────────────────────────────────────────────────────────
+
+function mapPaymentMethod(method: PaymentMethod): number {
+  switch (method) {
+    case 'pix':
+      return HIPER_PAYMENT_METHODS.pix;
+    case 'cartao':
+      return HIPER_PAYMENT_METHODS.cartao_credito;
+    case 'boleto':
+      // HIPER doesn't have a boleto ID; map to dinheiro as closest
+      return HIPER_PAYMENT_METHODS.dinheiro;
+    case 'dinheiro':
+      return HIPER_PAYMENT_METHODS.dinheiro;
+    default:
+      return HIPER_PAYMENT_METHODS.pix;
   }
 }
