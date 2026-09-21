@@ -169,14 +169,22 @@ export function CartDrawer() {
                   </span>
                 </div>
                 
-                <Link 
-                  href="/checkout"
-                  onClick={() => setIsOpen(false)}
-                  className="w-full flex items-center justify-center gap-2 bg-brand-forest hover:bg-brand-forest-light text-white font-bold uppercase tracking-widest text-sm h-14 rounded-md transition-all active:scale-[0.98] shadow-lg shadow-brand-forest/20"
-                >
-                  Finalizar Compra
-                  <ArrowRight size={20} weight="bold" />
-                </Link>
+                <div className="flex flex-col gap-3">
+                  <button 
+                    onClick={() => setIsOpen(false)}
+                    className="w-full flex items-center justify-center gap-2 bg-white border border-gray-300 hover:border-brand-forest text-brand-dark hover:text-brand-forest font-bold uppercase tracking-widest text-sm h-14 rounded-md transition-all active:scale-[0.98]"
+                  >
+                    Continuar Comprando
+                  </button>
+                  <Link 
+                    href="/checkout"
+                    onClick={() => setIsOpen(false)}
+                    className="w-full flex items-center justify-center gap-2 bg-brand-forest hover:bg-brand-forest-light text-white font-bold uppercase tracking-widest text-sm h-14 rounded-md transition-all active:scale-[0.98] shadow-lg shadow-brand-forest/20"
+                  >
+                    Finalizar Compra
+                    <ArrowRight size={20} weight="bold" />
+                  </Link>
+                </div>
                 
                 <p className="text-center text-xs text-gray-400 mt-4">
                   Frete e impostos serão calculados no checkout.

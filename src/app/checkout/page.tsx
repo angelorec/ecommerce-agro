@@ -39,6 +39,10 @@ export default function CheckoutPage() {
     setMounted(true);
   }, []);
 
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [step]);
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
   };
@@ -156,7 +160,7 @@ export default function CheckoutPage() {
                       <label className={`border-2 rounded-xl p-4 cursor-pointer flex flex-col items-center justify-center gap-2 transition-all ${formData.metodoEntrega === 'correios' ? 'border-brand-forest bg-green-50 text-brand-forest' : 'border-gray-200 text-gray-500 hover:border-brand-forest/50'}`}>
                         <input type="radio" name="metodoEntrega" value="correios" className="hidden" checked={formData.metodoEntrega === 'correios'} onChange={handleChange} />
                         <Truck size={32} weight={formData.metodoEntrega === 'correios' ? "fill" : "regular"} />
-                        <span className="font-bold">Correios/Transportadora</span>
+                        <span className="font-bold">Entrega</span>
                       </label>
                       <label className={`border-2 rounded-xl p-4 cursor-pointer flex flex-col items-center justify-center gap-2 transition-all ${formData.metodoEntrega === 'retirada' ? 'border-brand-forest bg-green-50 text-brand-forest' : 'border-gray-200 text-gray-500 hover:border-brand-forest/50'}`}>
                         <input type="radio" name="metodoEntrega" value="retirada" className="hidden" checked={formData.metodoEntrega === 'retirada'} onChange={handleChange} />
