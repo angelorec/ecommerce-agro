@@ -1,22 +1,27 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useSyncExternalStore } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useCart } from "@/lib/cart";
 import { 
   List, X, ShoppingCart, User, WhatsappLogo, 
-  PawPrint, Horse, Egg, Fish, Tag, House, Info, Phone
+  PawPrint, Dog, Cat, FirstAid, Tag, House, Info, Phone
 } from "@phosphor-icons/react";
 import { AnimatePresence, motion } from "motion/react";
 
+const emptySubscribe = () => () => {};
+function useHydrated() {
+  return useSyncExternalStore(emptySubscribe, () => true, () => false);
+}
+
 const navItems = [
   { href: "/", label: "Início", icon: House },
-  { href: "/categorias/pets", label: "Pets (Cães e Gatos)", icon: PawPrint },
-  { href: "/categorias/grandes-animais", label: "Grandes Animais", icon: Horse },
-  { href: "/categorias/avicola", label: "Avícola", icon: Egg },
-  { href: "/categorias/peixes", label: "Peixes e Alevinos", icon: Fish },
-  { href: "/ofertas", label: "Ofertas da Semana 🔥", icon: Tag, accent: true },
+  { href: "/categorias/caes", label: "Cães", icon: Dog },
+  { href: "/categorias/gatos", label: "Gatos", icon: Cat },
+  { href: "/categorias/higiene-pet", label: "Higiene e Beleza Pet", icon: FirstAid },
+  { href: "/categorias/acessorios-pet", label: "Acessórios Pet", icon: PawPrint },
+  { href: "/categorias/ofertas", label: "Ofertas da Semana 🔥", icon: Tag, accent: true },
   { href: "/sobre", label: "Sobre o Rancho", icon: Info },
   { href: "/contato", label: "Contato", icon: Phone },
 ];
@@ -24,9 +29,7 @@ const navItems = [
 export function MobileNav() {
   const [isOpen, setIsOpen] = useState(false);
   const { getTotalItems, toggleCart } = useCart();
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => { setMounted(true); }, []);
+  const mounted = useHydrated();
 
   const totalItems = mounted ? getTotalItems() : 0;
 
@@ -89,7 +92,7 @@ export function MobileNav() {
                   </div>
                   <div>
                     <p className="font-display font-black text-sm uppercase leading-tight">Rancho dos Pinheiros</p>
-                    <p className="text-brand-gold text-[10px] font-bold uppercase tracking-widest">Agropecuária</p>
+                    <p className="text-brand-gold text-[10px] font-bold uppercase tracking-widest">Pet Shop</p>
                   </div>
                 </div>
                 <button

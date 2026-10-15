@@ -123,13 +123,6 @@ export function OffersCarousel({ products }: OffersCarouselProps) {
           </div>
         </div>
       </div>
-      
-      {/* CSS global embutido apenas para esconder barra de rolagem em webkit (caso necessário, ou pode estar no globals.css) */}
-      <style dangerouslySetInnerHTML={{__html: `
-        .hide-scrollbar::-webkit-scrollbar {
-          display: none;
-        }
-      `}} />
     </section>
   );
 }

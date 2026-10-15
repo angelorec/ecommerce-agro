@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { CheckCircle, WhatsappLogo, MapPin } from "@phosphor-icons/react";
+import { CheckCircle, WhatsappLogo } from "@phosphor-icons/react";
 
 export default function OrderSuccessPage() {
   return (
@@ -19,7 +19,7 @@ export default function OrderSuccessPage() {
         </h1>
         
         <p className="text-gray-600 mb-8 max-w-md mx-auto text-lg">
-          Seu pedido <strong className="text-brand-dark">#RP-{(Math.random() * 100000).toFixed(0).padStart(6, '0')}</strong> foi processado com sucesso. Obrigado por confiar no Rancho dos Pinheiros.
+          Seu pedido <strong className="text-brand-dark">#RP-849201</strong> foi processado com sucesso. Obrigado por confiar no Rancho dos Pinheiros.
         </p>
 
         <div className="bg-gray-50 border border-gray-200 rounded-xl p-6 text-left mb-8 max-w-md mx-auto">

@@ -2,16 +2,19 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { MagnifyingGlass, ShoppingCart, User, WhatsappLogo } from "@phosphor-icons/react";
+import { MagnifyingGlass, ShoppingCart, User, WhatsappLogo, PawPrint } from "@phosphor-icons/react";
 import { useCart } from "@/lib/cart";
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 import { MobileNav } from "./MobileNav";
+
+const emptySubscribe = () => () => {};
+function useHydrated() {
+  return useSyncExternalStore(emptySubscribe, () => true, () => false);
+}
 
 export function Header() {
   const { getTotalItems, getSubtotal, toggleCart } = useCart();
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => { setMounted(true); }, []);
+  const mounted = useHydrated();
 
   const totalItems = mounted ? getTotalItems() : 0;
   const subtotal = mounted ? getSubtotal() : 0;
@@ -20,14 +23,15 @@ export function Header() {
     <header className="sticky top-0 z-50 w-full bg-white border-b shadow-sm">
       {/* Top bar — desktop only */}
       <div className="bg-brand-forest text-white text-xs py-1.5 px-4 text-center hidden md:block">
-        Tudo para o produtor rural. Qualidade, preço baixo e confiança. &nbsp;|&nbsp;{" "}
+        <PawPrint size={14} weight="fill" className="inline mr-1 text-brand-gold" />
+        Tudo para o seu Pet com carinho e qualidade! &nbsp;|&nbsp;{" "}
         <a href="https://wa.me/5549998142661" className="underline font-bold hover:text-brand-gold transition-colors">
           (49) 99814-2661
         </a>
       </div>
 
       <div className="container mx-auto px-4 h-16 md:h-20 flex items-center justify-between gap-4">
-        {/* Mobile nav (includes hamburger + cart icon) */}
+        {/* Mobile nav */}
         <MobileNav />
 
         {/* Logo */}
@@ -45,7 +49,7 @@ export function Header() {
             <p className="font-display font-black text-brand-dark leading-tight text-base lg:text-lg uppercase tracking-tight">
               Rancho <span className="text-brand-forest">dos</span> Pinheiros
             </p>
-            <p className="text-[10px] text-brand-gold font-extrabold tracking-widest uppercase">Agropecuária</p>
+            <p className="text-[10px] text-brand-gold font-extrabold tracking-widest uppercase">Pet Shop</p>
           </div>
         </Link>
 
@@ -54,7 +58,7 @@ export function Header() {
           <input
             type="text"
             name="q"
-            placeholder="O que você está procurando?"
+            placeholder="Buscar ração, acessório, medicamento pet..."
             className="w-full h-11 pl-4 pr-12 rounded-full border border-gray-300 focus:outline-none focus:border-brand-forest focus:ring-1 focus:ring-brand-forest transition-colors bg-gray-50 text-sm"
           />
           <button type="submit" aria-label="Buscar" className="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-brand-forest hover:bg-gray-100 rounded-full transition-colors">
@@ -108,7 +112,7 @@ export function Header() {
           <input
             type="text"
             name="q"
-            placeholder="O que você está procurando?"
+            placeholder="Buscar produto para seu pet..."
             className="w-full h-11 pl-4 pr-12 rounded-full border border-gray-300 focus:outline-none focus:border-brand-forest focus:ring-1 focus:ring-brand-forest transition-colors bg-gray-50 text-sm"
           />
           <button type="submit" aria-label="Buscar" className="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-brand-forest hover:bg-gray-100 rounded-full transition-colors">
@@ -117,15 +121,16 @@ export function Header() {
         </form>
       </div>
 
-      {/* Desktop category navigation */}
+      {/* Desktop category navigation — PETS focused */}
       <nav className="hidden md:block border-t border-gray-100 bg-white">
         <div className="container mx-auto px-4">
           <ul className="flex items-center justify-center gap-8 h-11">
             {[
-              { href: "/categorias/pets", label: "Pets" },
-              { href: "/categorias/grandes-animais", label: "Grandes Animais" },
-              { href: "/categorias/avicola", label: "Avícola" },
-              { href: "/categorias/peixes", label: "Peixes" },
+              { href: "/categorias/caes", label: "🐕 Cães" },
+              { href: "/categorias/gatos", label: "🐈 Gatos" },
+              { href: "/categorias/higiene-pet", label: "🧴 Higiene" },
+              { href: "/categorias/acessorios-pet", label: "🎾 Acessórios" },
+              { href: "/categorias/ofertas", label: "🔥 Ofertas" },
             ].map(({ href, label }) => (
               <li key={href}>
                 <Link href={href} className="text-sm font-semibold text-brand-dark hover:text-brand-forest transition-colors uppercase tracking-wide">

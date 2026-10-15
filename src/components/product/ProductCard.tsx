@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import { useState } from "react";
 import Link from "next/link";
 import { HiperProduct } from "@/lib/hiper/types";
 import { ShoppingCart } from "@phosphor-icons/react";
@@ -12,6 +12,7 @@ interface ProductCardProps {
 
 export function ProductCard({ product }: ProductCardProps) {
   const { addItem } = useCart();
+  const [imgError, setImgError] = useState(false);
 
   const hasDiscount = product.promotionalPrice && product.promotionalPrice < product.price;
 
@@ -33,18 +34,19 @@ export function ProductCard({ product }: ProductCardProps) {
       </div>
 
       <Link href={`/produtos/${product.id}`} className="relative h-44 sm:h-56 w-full bg-gradient-to-br from-gray-50 to-gray-100 flex-shrink-0 flex items-center justify-center overflow-hidden">
-        {/* Placeholder elegante caso não haja imagem */}
+        {/* Placeholder elegante caso não haja imagem ou erro */}
         <div className="absolute inset-0 flex items-center justify-center z-0">
           <div className="w-24 h-24 rounded-full bg-brand-forest/5 flex items-center justify-center">
              <span className="font-display font-black text-4xl text-brand-forest/20 tracking-tighter">RP</span>
           </div>
         </div>
-        {product.images[0] && !product.images[0].includes('placeholder') && (
-          <Image
+        {product.images[0] && !product.images[0].includes('placeholder') && !imgError && (
+          <img
             src={product.images[0]}
             alt={product.name}
-            fill
-            className="object-contain p-6 group-hover:scale-110 transition-transform duration-500 ease-out relative z-10 drop-shadow-sm mix-blend-multiply"
+            onError={() => setImgError(true)}
+            loading="lazy"
+            className="w-full h-full object-contain p-6 group-hover:scale-110 transition-transform duration-500 ease-out relative z-10 drop-shadow-sm mix-blend-multiply"
           />
         )}
       </Link>

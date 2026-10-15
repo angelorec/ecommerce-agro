@@ -6,9 +6,9 @@ import { notFound } from "next/navigation";
 import { CaretDown } from "@phosphor-icons/react/dist/ssr";
 
 interface Props {
-  params: {
+  params: Promise<{
     slug: string;
-  };
+  }>;
 }
 
 export default async function CategoryPage({ params }: Props) {

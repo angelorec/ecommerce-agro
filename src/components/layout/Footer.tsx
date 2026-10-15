@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { MapPin, WhatsappLogo, InstagramLogo, EnvelopeSimple } from "@phosphor-icons/react/dist/ssr";
+import { MapPin, WhatsappLogo, InstagramLogo, EnvelopeSimple, PawPrint } from "@phosphor-icons/react/dist/ssr";
 
 export function Footer() {
   return (
@@ -20,11 +20,11 @@ export function Footer() {
               </div>
               <div>
                 <h2 className="font-display font-black leading-tight text-lg uppercase tracking-tight text-white">Rancho <span className="text-brand-gold">dos</span> Pinheiros</h2>
-                <p className="text-[10px] text-gray-400 font-bold tracking-widest uppercase">Agropecuária</p>
+                <p className="text-[10px] text-gray-400 font-bold tracking-widest uppercase">Pet Shop</p>
               </div>
             </div>
             <p className="text-sm text-gray-400 leading-relaxed max-w-[280px]">
-              Tudo para o agro e o lar. Parceiro de confiança do produtor rural, com atendimento de quem vive e entende a roça.
+              Tudo para o seu pet com carinho e qualidade. Rações, acessórios, higiene e saúde animal com atendimento especializado.
             </p>
             <div className="flex gap-4 pt-2">
               <a href="https://instagram.com/agropecuaria.rancho" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-brand-gold hover:text-brand-dark transition-colors">
@@ -57,13 +57,16 @@ export function Footer() {
 
           {/* Links Col */}
           <div className="space-y-4">
-            <h3 className="font-display font-bold text-lg uppercase tracking-wider text-brand-gold">Departamentos</h3>
+            <h3 className="font-display font-bold text-lg uppercase tracking-wider text-brand-gold">
+              <PawPrint size={18} weight="fill" className="inline mr-1" />
+              Departamentos
+            </h3>
             <ul className="space-y-2 text-sm text-gray-300">
-              <li><Link href="/categorias/pets" className="hover:text-white transition-colors">Pets (Cães e Gatos)</Link></li>
-              <li><Link href="/categorias/grandes-animais" className="hover:text-white transition-colors">Grandes Animais</Link></li>
-              <li><Link href="/categorias/avicola" className="hover:text-white transition-colors">Avícola</Link></li>
-              <li><Link href="/categorias/peixes" className="hover:text-white transition-colors">Peixes e Alevinos</Link></li>
-              <li><Link href="/ofertas" className="hover:text-brand-red transition-colors font-medium">Ofertas da Semana</Link></li>
+              <li><Link href="/categorias/caes" className="hover:text-white transition-colors">Cães</Link></li>
+              <li><Link href="/categorias/gatos" className="hover:text-white transition-colors">Gatos</Link></li>
+              <li><Link href="/categorias/higiene-pet" className="hover:text-white transition-colors">Higiene e Beleza Pet</Link></li>
+              <li><Link href="/categorias/acessorios-pet" className="hover:text-white transition-colors">Acessórios Pet</Link></li>
+              <li><Link href="/categorias/ofertas" className="hover:text-brand-red transition-colors font-medium">Ofertas da Semana</Link></li>
             </ul>
           </div>
 
@@ -72,9 +75,8 @@ export function Footer() {
             <h3 className="font-display font-bold text-lg uppercase tracking-wider text-brand-gold">Informações</h3>
             <ul className="space-y-2 text-sm text-gray-300">
               <li><Link href="/sobre" className="hover:text-white transition-colors">Sobre o Rancho</Link></li>
-              <li><Link href="/pagamento-entrega" className="hover:text-white transition-colors">Pagamento e Entrega</Link></li>
-              <li><Link href="/trocas" className="hover:text-white transition-colors">Política de Trocas</Link></li>
-              <li><Link href="/privacidade" className="hover:text-white transition-colors">Política de Privacidade</Link></li>
+              <li><Link href="/contato" className="hover:text-white transition-colors">Fale Conosco</Link></li>
+              <li><Link href="/produtos" className="hover:text-white transition-colors">Todos os Produtos</Link></li>
             </ul>
           </div>
         </div>
@@ -84,7 +86,7 @@ export function Footer() {
             &copy; {new Date().getFullYear()} Rancho dos Pinheiros Agropecuária. Todos os direitos reservados.
           </p>
           <div className="flex items-center gap-4 text-xs text-gray-500 font-medium">
-            <span>BORA PRO RANCHO!</span>
+            <span>🐾 BORA PRO RANCHO!</span>
           </div>
         </div>
       </div>

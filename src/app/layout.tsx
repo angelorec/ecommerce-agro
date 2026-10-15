@@ -20,14 +20,14 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: {
-    default: "Rancho dos Pinheiros Agropecuária | Lages/SC",
-    template: "%s | Rancho dos Pinheiros",
+    default: "Rancho dos Pinheiros Pet Shop | Lages/SC",
+    template: "%s | Rancho dos Pinheiros Pet Shop",
   },
-  description: "Agropecuária em Lages/SC. Rações, vacinas, remédios e acessórios para animais de grande e pequeno porte. Qualidade de verdade, preço justo e atendimento especializado.",
-  keywords: ["agropecuária", "rações", "vacinas", "remédios veterinários", "Lages", "Santa Catarina", "pets", "bovinos", "aves"],
+  description: "Pet Shop em Lages/SC. Rações premium, acessórios, higiene e saúde para cães e gatos. Qualidade de verdade, preço justo e atendimento especializado para seu pet.",
+  keywords: ["pet shop", "rações", "cães", "gatos", "acessórios pet", "Lages", "Santa Catarina", "pets", "ração cachorro", "ração gato"],
   openGraph: {
-    title: "Rancho dos Pinheiros Agropecuária",
-    description: "Tudo para o produtor rural com qualidade, preço justo e confiança.",
+    title: "Rancho dos Pinheiros Pet Shop",
+    description: "Tudo para o seu pet com carinho, qualidade e preço justo.",
     locale: "pt_BR",
     type: "website",
   },
@@ -39,8 +39,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="pt-BR" className={`${montserrat.variable} ${inter.variable}`}>
-      <body className="font-sans antialiased bg-white text-brand-dark flex flex-col min-h-screen">
+    <html lang="pt-BR" className={`${montserrat.variable} ${inter.variable}`} suppressHydrationWarning>
+      <body className="font-sans antialiased bg-white text-brand-dark flex flex-col min-h-screen" suppressHydrationWarning>
         <Header />
         <CartDrawer />
         <WhatsAppFloat />

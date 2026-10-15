@@ -1,9 +1,18 @@
 import { fetchHiperAPI } from './client';
 import { HiperProduct, HiperRawProduct, PaginatedResponse } from './types';
 
-// Complete agro-rancho products mock catalog with high quality images
+/**
+ * Only syncs products whose HIPER category is exactly "PETS".
+ * Other categories (Rações Pets, Insumos P Ração, etc.) are excluded.
+ */
+const PETS_CATEGORY_NAME = 'PETS';
+
+function isPetsCategory(categoryName: string): boolean {
+  return categoryName.trim().toUpperCase() === PETS_CATEGORY_NAME;
+}
+
+// PETS-only mock catalog
 const MOCK_PRODUCTS: HiperProduct[] = [
-  // PETS
   {
     id: 'p1',
     name: 'Ração Golden Special Cães Adultos Frango e Carne 15kg',
@@ -48,200 +57,87 @@ const MOCK_PRODUCTS: HiperProduct[] = [
     brand: 'Pet Clean',
     isActive: true,
   },
-
-  // GRANDES ANIMAIS
   {
-    id: 'p2',
-    name: 'Sal Mineral Fosbovi Confinamento 30kg',
-    description: 'Suplemento mineral pronto para uso em bovinos de corte em engorda acelerada.',
-    price: 115.50,
-    stock: 50,
-    sku: 'FOSBOVI-30KG',
-    categoryId: 'cat-grandes',
-    categoryName: 'Grandes Animais',
-    images: ['https://images.unsplash.com/photo-1570042707222-67258386377e?w=800&q=80'],
-    weight: 30,
-    brand: 'Tortuga',
-    isActive: true,
-  },
-  {
-    id: 'p6',
-    name: 'Ração Bovinos de Leite Lactação 40kg',
-    description: 'Ração concentrada 22% proteína bruta para alta produção leiteira.',
-    price: 98.90,
-    promotionalPrice: 89.90,
-    stock: 35,
-    sku: 'Bov-LEITE-40KG',
-    categoryId: 'cat-grandes',
-    categoryName: 'Grandes Animais',
-    images: ['https://images.unsplash.com/photo-1546445317-29f4545f9d52?w=800&q=80'],
-    weight: 40,
-    brand: 'Supra Agro',
-    isActive: true,
-  },
-  {
-    id: 'p7',
-    name: 'Endectocida Pour-On Para Bovinos 1 Litro',
-    description: 'Controle eficaz de vermes gastrointestinais, carrapatos e mosca do chifre.',
-    price: 148.00,
-    stock: 15,
-    sku: 'POURON-1L',
-    categoryId: 'cat-grandes',
-    categoryName: 'Grandes Animais',
-    images: ['https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=800&q=80'],
-    weight: 1,
-    brand: 'Ourofino',
-    isActive: true,
-  },
-
-  // AVÍCOLA
-  {
-    id: 'p3',
-    name: 'Ração Inicial Para Pintinhos 5kg',
-    description: 'Ração balanceada para fase inicial de aves de postura e corte.',
-    price: 35.90,
-    stock: 12,
-    sku: 'AVES-INICIAL-5',
-    categoryId: 'cat-avicola',
-    categoryName: 'Avícola',
-    images: ['https://images.unsplash.com/photo-1548550023-2bdb3c5beed7?w=800&q=80'],
-    weight: 5,
-    brand: 'Supra',
-    isActive: true,
-  },
-  {
-    id: 'p8',
-    name: 'Comedouro Tubular Plástico Aves 12kg',
-    description: 'Comedouro com regulagem de altura e prato reforçado para granja.',
-    price: 49.90,
-    stock: 22,
-    sku: 'COMED-TUB-12',
-    categoryId: 'cat-avicola',
-    categoryName: 'Avícola',
-    images: ['https://images.unsplash.com/photo-1516467508483-a7212febe31a?w=800&q=80'],
-    weight: 1.2,
-    brand: 'Inplasul',
-    isActive: true,
-  },
-
-  // PEIXES E ALEVINOS
-  {
-    id: 'p9',
-    name: 'Ração Extrusada Para Tilápias 32% Proteína 15kg',
-    description: 'Alimento flutuante para alta conversão alimentar de peixes de água doce.',
-    price: 89.90,
-    promotionalPrice: 79.90,
+    id: 'p16',
+    name: 'Ração Pedigree Nutrição Essencial Carne 15kg',
+    description: 'Alimento completo para cães adultos de todas as raças. Rica em proteínas e com DHA para saúde cognitiva.',
+    price: 119.90,
+    promotionalPrice: 109.90,
     stock: 30,
-    sku: 'TILAPIA-32-15KG',
-    categoryId: 'cat-peixes',
-    categoryName: 'Peixes e Alevinos',
-    images: ['https://images.unsplash.com/photo-1522069169874-c58ec4b76be5?w=800&q=80'],
+    sku: 'PEDIGREE-15KG',
+    categoryId: 'cat-pets',
+    categoryName: 'Pets',
+    images: ['https://images.unsplash.com/photo-1601758228041-f3b2795255f1?w=800&q=80'],
     weight: 15,
-    brand: 'Nutripiscis',
-    isActive: true,
-  },
-
-  // EQUINOS
-  {
-    id: 'p10',
-    name: 'Ração Equinos Trabalho e Cavalgada 25kg',
-    description: 'Força e energia com melaço de cana e óleos vegetais de alta digestibilidade.',
-    price: 78.50,
-    stock: 20,
-    sku: 'EQUINO-TRAB-25KG',
-    categoryId: 'cat-equinos',
-    categoryName: 'Equinos',
-    images: ['https://images.unsplash.com/photo-1553284965-83fd3e82fa5a?w=800&q=80'],
-    weight: 25,
-    brand: 'Presence',
+    brand: 'Pedigree',
     isActive: true,
   },
   {
-    id: 'p11',
-    name: 'Suplemento Eletrolítico Para Equinos 1kg',
-    description: 'Reposição rápida de eletrólitos perdidos pelo suor durante atividades intensas.',
-    price: 65.00,
-    stock: 14,
-    sku: 'ELETROLIT-1KG',
-    categoryId: 'cat-equinos',
-    categoryName: 'Equinos',
-    images: ['https://images.unsplash.com/photo-1534447677768-be436bb09401?w=800&q=80'],
-    weight: 1,
-    brand: 'Vetnil',
-    isActive: true,
-  },
-
-  // VACINAS E REMÉDIOS
-  {
-    id: 'p12',
-    name: 'Vacina Aftosa Ourovac 50 Doses',
-    description: 'Imunização eficaz contra febre aftosa para rebanho bovino e bubalino.',
-    price: 185.00,
-    stock: 45,
-    sku: 'VAC-AFTOSA-50D',
-    categoryId: 'cat-vacinas',
-    categoryName: 'Vacinas e Remédios',
-    images: ['https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=800&q=80'],
-    weight: 0.3,
-    brand: 'Ourofino Saúde Animal',
+    id: 'p17',
+    name: 'Areia Sanitária para Gatos Pipicat Classic 12kg',
+    description: 'Areia higiênica com alta absorção e controle de odor para gatos.',
+    price: 39.90,
+    stock: 50,
+    sku: 'PIPICAT-12KG',
+    categoryId: 'cat-pets',
+    categoryName: 'Pets',
+    images: ['https://images.unsplash.com/photo-1574158622682-e40e69881006?w=800&q=80'],
+    weight: 12,
+    brand: 'Pipicat',
     isActive: true,
   },
   {
-    id: 'p13',
-    name: 'Anti-inflamatório Flunixin Meglumine 50ml',
-    description: 'Alívio rápido de dor e inflamação para bovinos e eqüinos.',
-    price: 52.90,
-    promotionalPrice: 47.90,
-    stock: 28,
-    sku: 'FLUNIXIN-50ML',
-    categoryId: 'cat-vacinas',
-    categoryName: 'Vacinas e Remédios',
-    images: ['https://images.unsplash.com/photo-1576602976047-174e57a47881?w=800&q=80'],
-    weight: 0.1,
-    brand: 'Chemotecnica',
-    isActive: true,
-  },
-
-  // ACESSÓRIOS & FERRAMENTAS
-  {
-    id: 'p14',
-    name: 'Bota Galocha Sem Biqueira Preta Cano Médio',
-    description: 'Bota impermeável de PVC reforçada para uso agrícola e trabalho no campo.',
-    price: 69.90,
-    stock: 25,
-    sku: 'BOTA-PVC-PRETA',
-    categoryId: 'cat-acessorios',
-    categoryName: 'Acessórios & Ferramentas',
-    images: ['https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=800&q=80'],
-    weight: 1.5,
-    brand: 'Vulcabras',
+    id: 'p18',
+    name: 'Coleira Antipulgas e Carrapatos Seresto Cães até 8kg',
+    description: 'Proteção contínua por até 8 meses contra pulgas e carrapatos. Sem cheiro e resistente à água.',
+    price: 189.90,
+    promotionalPrice: 169.90,
+    stock: 12,
+    sku: 'SERESTO-P',
+    categoryId: 'cat-pets',
+    categoryName: 'Pets',
+    images: ['https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=800&q=80'],
+    weight: 0.05,
+    brand: 'Seresto',
     isActive: true,
   },
   {
-    id: 'p15',
-    name: 'Pulverizador Manual de Costa 20 Litros',
-    description: 'Compressão prévia com gatilho de trava e lança ajustável de inox.',
-    price: 219.00,
-    promotionalPrice: 199.90,
-    stock: 10,
-    sku: 'PULVERIZ-20L',
-    categoryId: 'cat-acessorios',
-    categoryName: 'Acessórios & Ferramentas',
-    images: ['https://images.unsplash.com/photo-1592417817098-8f3d6ef23a85?w=800&q=80'],
-    weight: 4,
-    brand: 'Jacto',
+    id: 'p19',
+    name: 'Ração Whiskas Castrados Sabor Carne 10,1kg',
+    description: 'Formulação especial para gatos castrados com controle de peso e bolas de pelo.',
+    price: 129.90,
+    stock: 22,
+    sku: 'WHISKAS-CAST-10KG',
+    categoryId: 'cat-pets',
+    categoryName: 'Pets',
+    images: ['https://images.unsplash.com/photo-1526336024174-e58f5cdd8e13?w=800&q=80'],
+    weight: 10.1,
+    brand: 'Whiskas',
     isActive: true,
-  }
+  },
+  {
+    id: 'p20',
+    name: 'Tapete Higiênico para Cães Super Secão 30 Unidades',
+    description: 'Alta absorção com gel que neutraliza odores. Ideal para filhotes e cães de apartamento.',
+    price: 49.90,
+    promotionalPrice: 42.90,
+    stock: 35,
+    sku: 'TAPETE-HIG-30',
+    categoryId: 'cat-pets',
+    categoryName: 'Pets',
+    images: ['https://images.unsplash.com/photo-1583337130417-13104dec14a8?w=800&q=80'],
+    weight: 2,
+    brand: 'Super Secão',
+    isActive: true,
+  },
 ];
 
 const USE_MOCKS = process.env.USE_HIPER_MOCK === 'true' || !process.env.HIPER_API_TOKEN;
 
 /**
  * Normalizes raw HIPER ERP product payload into our internal HiperProduct structure.
- * Maps exact fields from the HIPER /produtos/pontoDeSincronizacao response.
  */
 function normalizeHiperProduct(raw: HiperRawProduct): HiperProduct {
-  // Build images array: main image + additional images
   const images: string[] = [];
   if (raw.imagem) {
     images.push(raw.imagem);
@@ -255,7 +151,6 @@ function normalizeHiperProduct(raw: HiperRawProduct): HiperProduct {
     images.push('https://images.unsplash.com/photo-1589924691995-400dc9ecc119?w=800&q=80');
   }
 
-  // Map variations
   const variations = Array.isArray(raw.variacao)
     ? raw.variacao.map((v) => ({
         id: v.id,
@@ -270,7 +165,6 @@ function normalizeHiperProduct(raw: HiperRawProduct): HiperProduct {
       }))
     : undefined;
 
-  // Map wholesale prices
   const wholesalePrices = raw.precoAtacado?.precos?.map((p) => ({
     unitPrice: p.precoUnitario,
     quantity: p.quantidade,
@@ -297,7 +191,7 @@ function normalizeHiperProduct(raw: HiperRawProduct): HiperProduct {
 }
 
 /**
- * Fetches products from HIPER ERP using the pontoDeSincronizacao endpoint.
+ * Fetches products from HIPER ERP — ONLY syncs PETS category.
  * Falls back to mock data if API is unavailable or mocks are enabled.
  */
 export async function getProducts(
@@ -311,36 +205,39 @@ export async function getProducts(
   }
 
   try {
-    // HIPER returns all products since a sync point; we start from 0 to get everything
-    const rawResponse = await fetchHiperAPI<HiperRawProduct[] | any>(
+    const rawResponse = await fetchHiperAPI<HiperRawProduct[] | { produtos?: HiperRawProduct[]; data?: HiperRawProduct[] }>(
       '/api/v1/produtos/pontoDeSincronizacao?pontoDeSincronizacao=0'
     );
 
-    // The response may be an array directly or wrapped
     const rawList: HiperRawProduct[] = Array.isArray(rawResponse)
       ? rawResponse
+      : Array.isArray(rawResponse?.produtos)
+      ? rawResponse.produtos
       : Array.isArray(rawResponse?.data)
       ? rawResponse.data
       : [];
 
-    // Filter out removed and inactive products
+    // Filter: only ACTIVE, not REMOVED, and PETS category
     let products = rawList
-      .filter((item) => !item.removido && item.ativo)
+      .filter((item) => !item.removido && item.ativo && isPetsCategory(item.categoria || ''))
       .map(normalizeHiperProduct);
 
-    // Client-side filtering since HIPER sync endpoint doesn't support query params
+    // Additional category filter within PETS (subcategories)
     if (categoryIdOrSlug) {
       const target = categoryIdOrSlug.toLowerCase();
-      products = products.filter(
-        (p) =>
-          p.categoryId.toLowerCase() === target ||
-          p.categoryName.toLowerCase().includes(target) ||
-          p.categoryName
-            .toLowerCase()
-            .normalize('NFD')
-            .replace(/[\u0300-\u036f]/g, '')
-            .replace(/[^a-z0-9]+/g, '-') === target
-      );
+      // If user is browsing "pets" category, show all pets products
+      if (target !== 'pets' && target !== 'cat-pets') {
+        products = products.filter(
+          (p) =>
+            p.categoryId.toLowerCase() === target ||
+            p.categoryName.toLowerCase().includes(target) ||
+            p.categoryName
+              .toLowerCase()
+              .normalize('NFD')
+              .replace(/[\u0300-\u036f]/g, '')
+              .replace(/[^a-z0-9]+/g, '-') === target
+        );
+      }
     }
 
     if (search) {
@@ -354,7 +251,12 @@ export async function getProducts(
       );
     }
 
-    // Paginate
+    // If API returns zero PETS products, fall back to mocks
+    if (products.length === 0) {
+      console.warn('[HIPER] No PETS products found from API, using mock data as fallback');
+      return getFilteredMocks(page, pageSize, categoryIdOrSlug, search);
+    }
+
     const total = products.length;
     const start = (page - 1) * pageSize;
     const paginated = products.slice(start, start + pageSize);
@@ -384,13 +286,21 @@ export async function getProductBySlug(id: string): Promise<HiperProduct | null>
   }
 
   try {
-    // Fetch all products and find by ID since HIPER doesn't have a single-product endpoint
-    const allProducts = await fetchHiperAPI<HiperRawProduct[] | any>(
+    const allProducts = await fetchHiperAPI<HiperRawProduct[] | { produtos?: HiperRawProduct[]; data?: HiperRawProduct[] }>(
       '/api/v1/produtos/pontoDeSincronizacao?pontoDeSincronizacao=0'
     );
 
-    const rawList: HiperRawProduct[] = Array.isArray(allProducts) ? allProducts : (allProducts?.data || []);
-    const found = rawList.find((p) => p.id === id || String(p.codigo) === id || p.codigoDeBarras === id);
+    const rawList: HiperRawProduct[] = Array.isArray(allProducts)
+      ? allProducts
+      : Array.isArray(allProducts?.produtos)
+      ? allProducts.produtos
+      : (allProducts?.data || []);
+
+    // Only return products from PETS category
+    const found = rawList.find(
+      (p) => (p.id === id || String(p.codigo) === id || p.codigoDeBarras === id)
+             && isPetsCategory(p.categoria || '')
+    );
 
     if (!found) return null;
     return normalizeHiperProduct(found);
@@ -400,7 +310,6 @@ export async function getProductBySlug(id: string): Promise<HiperProduct | null>
   }
 }
 
-/** Filter and paginate mock products */
 function getFilteredMocks(
   page: number,
   pageSize: number,
@@ -411,16 +320,18 @@ function getFilteredMocks(
 
   if (categoryIdOrSlug) {
     const target = categoryIdOrSlug.toLowerCase();
-    filtered = filtered.filter(
-      (p) =>
-        p.categoryId.toLowerCase() === target ||
-        p.categoryName.toLowerCase().includes(target) ||
-        p.categoryName
-          .toLowerCase()
-          .normalize('NFD')
-          .replace(/[\u0300-\u036f]/g, '')
-          .replace(/[^a-z0-9]+/g, '-') === target
-    );
+    if (target !== 'pets' && target !== 'cat-pets') {
+      filtered = filtered.filter(
+        (p) =>
+          p.categoryId.toLowerCase() === target ||
+          p.categoryName.toLowerCase().includes(target) ||
+          p.categoryName
+            .toLowerCase()
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .replace(/[^a-z0-9]+/g, '-') === target
+      );
+    }
   }
 
   if (search) {

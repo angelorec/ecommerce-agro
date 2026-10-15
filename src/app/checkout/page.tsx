@@ -1,43 +1,38 @@
 "use client";
 
 import { useCart } from "@/lib/cart";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
-import { CreditCard, Truck, MapPin, CheckCircle, Money, Barcode, ArrowRight, ArrowLeft } from "@phosphor-icons/react";
-import Image from "next/image";
+import { CreditCard, Truck, MapPin, CheckCircle, Money, ArrowRight, ArrowLeft } from "@phosphor-icons/react";
 import Link from "next/link";
-import { useSound } from "@/hooks/useSound";
 import { motion, AnimatePresence } from "motion/react";
+
+const emptySubscribe = () => () => {};
+function useHydrated() {
+  return useSyncExternalStore(emptySubscribe, () => true, () => false);
+}
 
 export default function CheckoutPage() {
   const { items, getSubtotal, clearCart } = useCart();
   const router = useRouter();
-  const [mounted, setMounted] = useState(false);
+  const mounted = useHydrated();
   const [step, setStep] = useState(1);
   const [isProcessing, setIsProcessing] = useState(false);
-  
-  // Sound setup
-  const { play: playSuccess } = useSound('/sounds/purchase-success.mp3');
 
-  // Form State
   const [formData, setFormData] = useState({
-    nome: "",
-    email: "",
-    cpf: "",
-    telefone: "",
-    cep: "",
-    endereco: "",
-    numero: "",
-    bairro: "",
-    cidade: "",
-    estado: "",
-    metodoEntrega: "correios",
-    metodoPagamento: "pix"
+    nome: '',
+    email: '',
+    cpf: '',
+    telefone: '',
+    metodoEntrega: 'correios',
+    cep: '',
+    endereco: '',
+    numero: '',
+    bairro: '',
+    cidade: 'Lages',
+    estado: 'SC',
+    metodoPagamento: 'pix',
   });
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -97,12 +92,12 @@ export default function CheckoutPage() {
         throw new Error(data.error || data.details?.join(', ') || 'Erro ao processar pedido');
       }
 
-      playSuccess();
       clearCart();
       router.push('/checkout/sucesso');
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Checkout error:', error);
-      alert(`Erro ao finalizar pedido: ${error.message}`);
+      const errMsg = error instanceof Error ? error.message : 'Erro desconhecido';
+      alert(`Erro ao finalizar pedido: ${errMsg}`);
     } finally {
       setIsProcessing(false);
     }
@@ -136,11 +131,11 @@ export default function CheckoutPage() {
             Finalizar <span className="text-brand-forest">Compra</span>
           </h1>
           <div className="hidden sm:flex items-center gap-2 text-sm text-gray-500 font-medium">
-            <span className={step >= 1 ? "text-brand-forest" : ""}>1. Dados</span>
-            <span className="text-gray-300">--</span>
-            <span className={step >= 2 ? "text-brand-forest" : ""}>2. Entrega</span>
-            <span className="text-gray-300">--</span>
-            <span className={step >= 3 ? "text-brand-forest" : ""}>3. Pagamento</span>
+            <span className={step >= 1 ? "text-brand-forest font-bold" : ""}>1. Dados</span>
+            <span className="text-gray-300">→</span>
+            <span className={step >= 2 ? "text-brand-forest font-bold" : ""}>2. Entrega</span>
+            <span className="text-gray-300">→</span>
+            <span className={step >= 3 ? "text-brand-forest font-bold" : ""}>3. Pagamento</span>
           </div>
         </div>
 
@@ -167,16 +162,20 @@ export default function CheckoutPage() {
                     
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="md:col-span-2">
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Nome Completo</label>
-                        <input name="nome" value={formData.nome} onChange={handleChange} className="w-full h-12 px-4 border border-gray-300 rounded-md focus:border-brand-forest focus:ring-1 focus:ring-brand-forest outline-none" />
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Nome Completo *</label>
+                        <input name="nome" value={formData.nome} onChange={handleChange} placeholder="Seu nome completo" className="w-full h-12 px-4 border border-gray-300 rounded-md focus:border-brand-forest focus:ring-1 focus:ring-brand-forest outline-none transition-colors" />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">E-mail</label>
-                        <input type="email" name="email" value={formData.email} onChange={handleChange} className="w-full h-12 px-4 border border-gray-300 rounded-md focus:border-brand-forest outline-none" />
+                        <label className="block text-sm font-medium text-gray-700 mb-1">E-mail *</label>
+                        <input type="email" name="email" value={formData.email} onChange={handleChange} placeholder="seu@email.com" className="w-full h-12 px-4 border border-gray-300 rounded-md focus:border-brand-forest outline-none transition-colors" />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">CPF/CNPJ</label>
-                        <input name="cpf" value={formData.cpf} onChange={handleChange} className="w-full h-12 px-4 border border-gray-300 rounded-md focus:border-brand-forest outline-none" />
+                        <label className="block text-sm font-medium text-gray-700 mb-1">CPF/CNPJ *</label>
+                        <input name="cpf" value={formData.cpf} onChange={handleChange} placeholder="000.000.000-00" className="w-full h-12 px-4 border border-gray-300 rounded-md focus:border-brand-forest outline-none transition-colors" />
+                      </div>
+                      <div className="md:col-span-2">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Telefone / WhatsApp</label>
+                        <input name="telefone" value={formData.telefone} onChange={handleChange} placeholder="(49) 99999-9999" className="w-full h-12 px-4 border border-gray-300 rounded-md focus:border-brand-forest outline-none transition-colors" />
                       </div>
                     </div>
                     
@@ -207,32 +206,42 @@ export default function CheckoutPage() {
                         <input type="radio" name="metodoEntrega" value="correios" className="hidden" checked={formData.metodoEntrega === 'correios'} onChange={handleChange} />
                         <Truck size={32} weight={formData.metodoEntrega === 'correios' ? "fill" : "regular"} />
                         <span className="font-bold">Entrega</span>
+                        <span className="text-xs text-gray-500">R$ 25,90</span>
                       </label>
                       <label className={`border-2 rounded-xl p-4 cursor-pointer flex flex-col items-center justify-center gap-2 transition-all ${formData.metodoEntrega === 'retirada' ? 'border-brand-forest bg-green-50 text-brand-forest' : 'border-gray-200 text-gray-500 hover:border-brand-forest/50'}`}>
                         <input type="radio" name="metodoEntrega" value="retirada" className="hidden" checked={formData.metodoEntrega === 'retirada'} onChange={handleChange} />
                         <MapPin size={32} weight={formData.metodoEntrega === 'retirada' ? "fill" : "regular"} />
                         <span className="font-bold">Retirar na Loja</span>
+                        <span className="text-xs text-green-600 font-semibold">Grátis</span>
                       </label>
                     </div>
 
                     {formData.metodoEntrega === 'correios' && (
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div className="md:col-span-1">
-                          <label className="block text-sm font-medium text-gray-700 mb-1">CEP</label>
-                          <input name="cep" value={formData.cep} onChange={handleChange} className="w-full h-12 px-4 border border-gray-300 rounded-md outline-none" />
+                          <label className="block text-sm font-medium text-gray-700 mb-1">CEP *</label>
+                          <input name="cep" value={formData.cep} onChange={handleChange} placeholder="88504-010" className="w-full h-12 px-4 border border-gray-300 rounded-md outline-none focus:border-brand-forest focus:ring-1 focus:ring-brand-forest transition-colors" />
                         </div>
                         <div className="md:col-span-2">
-                          <label className="block text-sm font-medium text-gray-700 mb-1">Endereço</label>
-                          <input name="endereco" value={formData.endereco} onChange={handleChange} className="w-full h-12 px-4 border border-gray-300 rounded-md outline-none" />
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Endereço *</label>
+                          <input name="endereco" value={formData.endereco} onChange={handleChange} placeholder="Rua, Avenida..." className="w-full h-12 px-4 border border-gray-300 rounded-md outline-none focus:border-brand-forest focus:ring-1 focus:ring-brand-forest transition-colors" />
                         </div>
                         <div className="md:col-span-1">
-                          <label className="block text-sm font-medium text-gray-700 mb-1">Número</label>
-                          <input name="numero" value={formData.numero} onChange={handleChange} className="w-full h-12 px-4 border border-gray-300 rounded-md outline-none" />
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Número *</label>
+                          <input name="numero" value={formData.numero} onChange={handleChange} placeholder="123" className="w-full h-12 px-4 border border-gray-300 rounded-md outline-none focus:border-brand-forest focus:ring-1 focus:ring-brand-forest transition-colors" />
                         </div>
                         <div className="md:col-span-2">
-                          <label className="block text-sm font-medium text-gray-700 mb-1">Bairro</label>
-                          <input name="bairro" value={formData.bairro} onChange={handleChange} className="w-full h-12 px-4 border border-gray-300 rounded-md outline-none" />
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Bairro *</label>
+                          <input name="bairro" value={formData.bairro} onChange={handleChange} placeholder="Bairro" className="w-full h-12 px-4 border border-gray-300 rounded-md outline-none focus:border-brand-forest focus:ring-1 focus:ring-brand-forest transition-colors" />
                         </div>
+                      </div>
+                    )}
+
+                    {formData.metodoEntrega === 'retirada' && (
+                      <div className="bg-green-50 border border-green-200 rounded-lg p-4 text-sm text-green-800">
+                        <p className="font-bold mb-1">📍 Endereço para retirada:</p>
+                        <p>Rua São Joaquim, 1187 — Bairro Copacabana, Lages/SC</p>
+                        <p className="text-xs text-green-600 mt-1">Seg–Sex: 8h às 18h | Sáb: 8h às 12h</p>
                       </div>
                     )}
 
@@ -271,6 +280,9 @@ export default function CheckoutPage() {
                           <h4 className="font-bold text-gray-900">PIX (5% de desconto)</h4>
                           <p className="text-sm text-gray-500">Aprovação imediata</p>
                         </div>
+                        {formData.metodoPagamento === 'pix' && (
+                          <span className="text-green-600 font-bold text-sm">-5%</span>
+                        )}
                       </label>
                       
                       <label className={`border border-gray-200 rounded-lg p-4 cursor-pointer flex items-center gap-4 transition-all ${formData.metodoPagamento === 'cartao' ? 'border-brand-forest bg-green-50 ring-1 ring-brand-forest' : 'hover:bg-gray-50'}`}>
@@ -315,8 +327,8 @@ export default function CheckoutPage() {
                   const price = item.product.promotionalPrice || item.product.price;
                   return (
                     <div key={item.product.id} className="flex gap-3">
-                      <div className="w-16 h-16 bg-gray-50 rounded border border-gray-100 relative flex-shrink-0">
-                        <Image src={item.product.images[0] || '/images/placeholder.jpg'} alt={item.product.name} fill className="object-contain p-1" />
+                      <div className="w-16 h-16 bg-gray-50 rounded border border-gray-100 relative flex-shrink-0 overflow-hidden">
+                        <img src={item.product.images[0] || '/images/placeholder.jpg'} alt={item.product.name} className="w-full h-full object-contain p-1" />
                       </div>
                       <div className="flex-1">
                         <h4 className="text-sm font-medium text-brand-dark line-clamp-2 leading-tight mb-1">{item.product.name}</h4>

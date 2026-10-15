@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createHiperOrder, getOrderStatus, cancelOrder } from '@/lib/hiper/orders';
+import { createHiperOrder, getOrderStatus } from '@/lib/hiper/orders';
 import { z } from 'zod';
 
 const orderSchema = z.object({

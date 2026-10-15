@@ -4,15 +4,15 @@ import { MapPin, Phone, WhatsappLogo, CheckCircle } from "@phosphor-icons/react/
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Sobre Nós | Rancho dos Pinheiros Agropecuária",
-  description: "Conheça a história do Rancho dos Pinheiros em Lages/SC — a agropecuária de confiança do produtor rural com qualidade, preço justo e atendimento especializado.",
+  title: "Sobre Nós | Rancho dos Pinheiros Pet Shop",
+  description: "Conheça a história do Rancho dos Pinheiros em Lages/SC — o pet shop de confiança com qualidade, preço justo e carinho com o seu pet.",
 };
 
 const values = [
-  { title: "Qualidade", desc: "Trabalhamos apenas com produtos de marcas renomadas e fornecedores de confiança." },
-  { title: "Preço Justo", desc: "Negociamos direto com fabricantes para garantir os melhores preços para você." },
-  { title: "Atendimento", desc: "Nossa equipe conhece a lida do campo e fala a sua língua." },
-  { title: "Agilidade", desc: "Entregamos no campo e na cidade, com agilidade e cuidado." },
+  { title: "Qualidade", desc: "Trabalhamos apenas com rações e acessórios de marcas renomadas e fornecedores de confiança." },
+  { title: "Preço Justo", desc: "Negociamos direto com fabricantes para garantir os melhores preços para seu pet." },
+  { title: "Carinho", desc: "Nossa equipe ama animais e está pronta para ajudar você a cuidar do seu melhor amigo." },
+  { title: "Agilidade", desc: "Entregamos com rapidez e cuidado para que seu pet não fique esperando." },
 ];
 
 export default function SobrePage() {
@@ -61,16 +61,16 @@ export default function SobrePage() {
               </div>
 
               <p className="text-gray-600 leading-relaxed">
-                O Rancho dos Pinheiros nasceu do amor pelo campo e pela criação. Fundado em Lages, no coração de Santa Catarina, somos uma agropecuária que entende de verdade as necessidades do produtor rural e do dono de animais.
+                O Rancho dos Pinheiros nasceu do amor pelos animais. Fundado em Lages, no coração de Santa Catarina, somos um pet shop que entende de verdade as necessidades de quem cuida dos seus pets com carinho.
               </p>
 
               <p className="text-gray-600 leading-relaxed">
-                Com uma linha completa de rações, vacinas, remédios veterinários e acessórios para animais de grande e pequeno porte, nosso compromisso é oferecer sempre qualidade de verdade, preço justo e um atendimento de quem conhece a lida do dia a dia.
+                Com uma linha completa de rações premium, acessórios, produtos de higiene e saúde para cães e gatos, nosso compromisso é oferecer sempre qualidade de verdade, preço justo e um atendimento de quem ama animais tanto quanto você.
               </p>
 
               <div className="pt-2">
                 <p className="font-display font-black text-xl text-brand-dark uppercase tracking-wide">
-                  "Bora pro Rancho!"
+                  &quot;Bora pro Rancho!&quot;
                 </p>
               </div>
             </div>

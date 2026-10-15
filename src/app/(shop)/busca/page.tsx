@@ -68,7 +68,7 @@ export default async function SearchPage({ searchParams }: Props) {
             </div>
             <h3 className="font-display font-bold text-2xl text-brand-dark mb-3">Nenhum resultado</h3>
             <p className="text-base text-gray-500 mb-8 leading-relaxed">
-              Não conseguimos encontrar nenhum produto com o termo <span className="font-bold text-gray-700">"{q}"</span>. Verifique a ortografia ou tente palavras mais genéricas.
+              Não conseguimos encontrar nenhum produto com o termo <span className="font-bold text-gray-700">&quot;{q}&quot;</span>. Verifique a ortografia ou tente palavras mais genéricas.
             </p>
             <Link
               href="/produtos"

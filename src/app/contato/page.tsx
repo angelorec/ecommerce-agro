@@ -2,7 +2,6 @@
 
 import { MapPin, WhatsappLogo, EnvelopeSimple, Phone, PaperPlaneTilt } from "@phosphor-icons/react";
 import { useState } from "react";
-import type { Metadata } from "next";
 
 export default function ContatoPage() {
   const [sent, setSent] = useState(false);

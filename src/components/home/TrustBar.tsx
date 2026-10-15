@@ -1,4 +1,4 @@
-import { CheckCircle, CurrencyCircleDollar, Handshake, Truck } from "@phosphor-icons/react/dist/ssr";
+import { CheckCircle, CurrencyCircleDollar, Heart, Truck } from "@phosphor-icons/react/dist/ssr";
 
 const features = [
   {
@@ -12,14 +12,14 @@ const features = [
     subtitle: "De Verdade",
   },
   {
-    icon: Handshake,
-    title: "Atendimento",
-    subtitle: "Especializado",
+    icon: Heart,
+    title: "Carinho Com",
+    subtitle: "Seu Pet",
   },
   {
     icon: Truck,
-    title: "Agilidade Na",
-    subtitle: "Entrega",
+    title: "Entrega",
+    subtitle: "Rápida",
   }
 ];
 

@@ -2,19 +2,18 @@
 
 import { useCart } from "@/lib/cart";
 import { X, Trash, Plus, Minus, ShoppingCart, ArrowRight } from "@phosphor-icons/react";
-import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useSyncExternalStore } from "react";
 import { AnimatePresence, motion } from "motion/react";
+
+const emptySubscribe = () => () => {};
+function useHydrated() {
+  return useSyncExternalStore(emptySubscribe, () => true, () => false);
+}
 
 export function CartDrawer() {
   const { items, isOpen, setIsOpen, removeItem, updateQuantity, getSubtotal } = useCart();
-  const [mounted, setMounted] = useState(false);
-
-  // Prevent hydration mismatch
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  const mounted = useHydrated();
 
   // Close on Escape
   useEffect(() => {
@@ -110,11 +109,10 @@ export function CartDrawer() {
                         </button>
                         
                         <div className="relative w-20 h-20 bg-gray-50 rounded-md border border-gray-100 overflow-hidden flex-shrink-0">
-                          <Image 
+                          <img 
                             src={item.product.images[0] || '/images/placeholder.jpg'} 
                             alt={item.product.name}
-                            fill
-                            className="object-contain p-1"
+                            className="w-full h-full object-contain p-1"
                           />
                         </div>
                         
