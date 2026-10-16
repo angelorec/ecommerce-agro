@@ -132,7 +132,7 @@ const MOCK_PRODUCTS: HiperProduct[] = [
   },
 ];
 
-const USE_MOCKS = process.env.USE_HIPER_MOCK === 'true' || !process.env.HIPER_API_TOKEN;
+const USE_MOCKS = process.env.USE_HIPER_MOCK === 'true' || !process.env.HIPER_API_KEY;
 
 /**
  * Normalizes raw HIPER ERP product payload into our internal HiperProduct structure.
