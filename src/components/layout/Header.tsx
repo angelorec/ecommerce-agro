@@ -121,31 +121,7 @@ export function Header() {
         </form>
       </div>
 
-      {/* Desktop category navigation — PETS focused */}
-      <nav className="hidden md:block border-t border-gray-100 bg-white">
-        <div className="container mx-auto px-4">
-          <ul className="flex items-center justify-center gap-8 h-11">
-            {[
-              { href: "/categorias/caes", label: "🐕 Cães" },
-              { href: "/categorias/gatos", label: "🐈 Gatos" },
-              { href: "/categorias/higiene-pet", label: "🧴 Higiene" },
-              { href: "/categorias/acessorios-pet", label: "🎾 Acessórios" },
-              { href: "/categorias/ofertas", label: "🔥 Ofertas" },
-            ].map(({ href, label }) => (
-              <li key={href}>
-                <Link href={href} className="text-sm font-semibold text-brand-dark hover:text-brand-forest transition-colors uppercase tracking-wide">
-                  {label}
-                </Link>
-              </li>
-            ))}
-            <li>
-              <Link href="/produtos" className="text-sm font-extrabold text-brand-forest hover:opacity-80 transition-opacity uppercase tracking-wide">
-                Todos os Produtos
-              </Link>
-            </li>
-          </ul>
-        </div>
-      </nav>
+
     </header>
   );
 }

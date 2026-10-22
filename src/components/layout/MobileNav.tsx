@@ -6,32 +6,61 @@ import Image from "next/image";
 import { useCart } from "@/lib/cart";
 import { 
   List, X, ShoppingCart, User, WhatsappLogo, 
-  PawPrint, Dog, Cat, FirstAid, Tag, House, Info, Phone
+  PawPrint, Tag, House, Info, Phone, Storefront
 } from "@phosphor-icons/react";
 import { AnimatePresence, motion } from "motion/react";
+
+interface CategoryItem {
+  id: string;
+  name: string;
+  slug: string;
+  parentId?: string;
+}
 
 const emptySubscribe = () => () => {};
 function useHydrated() {
   return useSyncExternalStore(emptySubscribe, () => true, () => false);
 }
 
-const navItems = [
+const STATIC_NAV_TOP = [
   { href: "/", label: "Início", icon: House },
-  { href: "/categorias/caes", label: "Cães", icon: Dog },
-  { href: "/categorias/gatos", label: "Gatos", icon: Cat },
-  { href: "/categorias/higiene-pet", label: "Higiene e Beleza Pet", icon: FirstAid },
-  { href: "/categorias/acessorios-pet", label: "Acessórios Pet", icon: PawPrint },
+];
+
+const STATIC_NAV_BOTTOM = [
   { href: "/categorias/ofertas", label: "Ofertas da Semana 🔥", icon: Tag, accent: true },
+  { href: "/produtos", label: "Todos os Produtos", icon: Storefront },
   { href: "/sobre", label: "Sobre o Rancho", icon: Info },
   { href: "/contato", label: "Contato", icon: Phone },
 ];
 
 export function MobileNav() {
   const [isOpen, setIsOpen] = useState(false);
+  const [categories, setCategories] = useState<CategoryItem[]>([]);
   const { getTotalItems, toggleCart } = useCart();
   const mounted = useHydrated();
 
   const totalItems = mounted ? getTotalItems() : 0;
+
+  // Fetch categories dynamically when drawer opens
+  useEffect(() => {
+    if (!isOpen || categories.length > 0) return;
+
+    fetch("/api/categories")
+      .then((res) => res.json())
+      .then((data: CategoryItem[]) => {
+        if (Array.isArray(data)) setCategories(data);
+      })
+      .catch(() => {
+        // Fallback if API fails
+        setCategories([
+          { id: "cat-racao-caes", name: "Ração Cães", slug: "racao-caes" },
+          { id: "cat-racao-gatos", name: "Ração Gatos", slug: "racao-gatos" },
+          { id: "cat-higiene-pet", name: "Higiene Pet", slug: "higiene-pet" },
+          { id: "cat-acessorios-pet", name: "Acessórios Pet", slug: "acessorios-pet" },
+          { id: "cat-farmacia-pet", name: "Farmácia Pet", slug: "farmacia-pet" },
+        ]);
+      });
+  }, [isOpen, categories.length]);
 
   // Lock scroll when open
   useEffect(() => {
@@ -106,7 +135,50 @@ export function MobileNav() {
 
               {/* Links */}
               <ul className="flex-1 overflow-y-auto py-4 space-y-1 px-3">
-                {navItems.map(({ href, label, icon: Icon, accent }) => (
+                {/* Static top items */}
+                {STATIC_NAV_TOP.map(({ href, label, icon: Icon }) => (
+                  <li key={href}>
+                    <Link
+                      href={href}
+                      onClick={() => setIsOpen(false)}
+                      className="flex items-center gap-3 px-4 py-3 rounded-lg font-semibold text-sm text-white/80 hover:bg-white/10 hover:text-white transition-colors"
+                    >
+                      <Icon size={20} className="text-brand-gold" />
+                      {label}
+                    </Link>
+                  </li>
+                ))}
+
+                {/* Dynamic categories section */}
+                {categories.length > 0 && (
+                  <>
+                    <li className="px-4 pt-4 pb-1">
+                      <span className="text-[10px] font-bold uppercase tracking-widest text-white/40">
+                        Categorias
+                      </span>
+                    </li>
+                    {categories.map((cat) => (
+                      <li key={cat.id}>
+                        <Link
+                          href={`/categorias/${cat.slug}`}
+                          onClick={() => setIsOpen(false)}
+                          className="flex items-center gap-3 px-4 py-3 rounded-lg font-semibold text-sm text-white/80 hover:bg-white/10 hover:text-white transition-colors"
+                        >
+                          <PawPrint size={20} className="text-brand-gold" />
+                          {cat.name}
+                        </Link>
+                      </li>
+                    ))}
+                  </>
+                )}
+
+                {/* Divider */}
+                <li className="px-4 pt-3 pb-1">
+                  <div className="border-t border-white/10" />
+                </li>
+
+                {/* Static bottom items */}
+                {STATIC_NAV_BOTTOM.map(({ href, label, icon: Icon, accent }) => (
                   <li key={href}>
                     <Link
                       href={href}

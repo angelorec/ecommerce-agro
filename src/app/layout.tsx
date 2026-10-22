@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Montserrat, Inter } from "next/font/google";
 import "./globals.css";
 import { Header } from "@/components/layout/Header";
+import { CategoryNav } from "@/components/layout/CategoryNav";
 import { Footer } from "@/components/layout/Footer";
 import { CartDrawer } from "@/components/cart/CartDrawer";
 import { WhatsAppFloat } from "@/components/layout/WhatsAppFloat";
@@ -42,6 +43,7 @@ export default function RootLayout({
     <html lang="pt-BR" className={`${montserrat.variable} ${inter.variable}`} suppressHydrationWarning>
       <body className="font-sans antialiased bg-white text-brand-dark flex flex-col min-h-screen" suppressHydrationWarning>
         <Header />
+        <CategoryNav />
         <CartDrawer />
         <WhatsAppFloat />
         <main className="flex-grow">

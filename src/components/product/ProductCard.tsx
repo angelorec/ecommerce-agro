@@ -53,7 +53,7 @@ export function ProductCard({ product }: ProductCardProps) {
 
       <div className="p-4 flex flex-col flex-grow">
         <Link
-          href={`/categorias/${product.categoryName.toLowerCase().replace(/ /g, '-')}`}
+          href={`/categorias/${product.categoryName.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')}`}
           className="text-[10px] text-gray-500 font-bold uppercase tracking-wider mb-1 hover:text-brand-forest transition-colors"
         >
           {product.categoryName}

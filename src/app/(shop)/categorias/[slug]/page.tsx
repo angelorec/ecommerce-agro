@@ -23,8 +23,8 @@ export default async function CategoryPage({ params }: Props) {
 
   const categoryName = category ? category.name : 'Ofertas da Semana';
   
-  // Fetch products passing the category ID or slug to getProducts
-  const { data: rawProducts } = await getProducts(1, 50, slug === 'ofertas' ? undefined : (category?.id || slug));
+  // Fetch products — use slug for filtering (matchesCategory handles slug matching)
+  const { data: rawProducts } = await getProducts(1, 100, slug === 'ofertas' ? undefined : slug);
   
   const filteredProducts = slug === 'ofertas' 
     ? rawProducts.filter(p => p.promotionalPrice !== undefined)

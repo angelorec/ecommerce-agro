@@ -1,17 +1,8 @@
 import { fetchHiperAPI } from './client';
 import { HiperProduct, HiperRawProduct, PaginatedResponse } from './types';
+import { isPetsCategory, CATEGORY_MAPPING } from './categories';
 
-/**
- * Only syncs products whose HIPER category is exactly "PETS".
- * Other categories (Rações Pets, Insumos P Ração, etc.) are excluded.
- */
-const PETS_CATEGORY_NAME = 'PETS';
-
-function isPetsCategory(categoryName: string): boolean {
-  return categoryName.trim().toUpperCase() === PETS_CATEGORY_NAME;
-}
-
-// PETS-only mock catalog
+// Mock catalog for when API is unavailable
 const MOCK_PRODUCTS: HiperProduct[] = [
   {
     id: 'p1',
@@ -21,8 +12,8 @@ const MOCK_PRODUCTS: HiperProduct[] = [
     promotionalPrice: 145.90,
     stock: 24,
     sku: 'GOLDEN-15KG',
-    categoryId: 'cat-pets',
-    categoryName: 'Pets',
+    categoryId: 'cat-racao-caes',
+    categoryName: 'Ração Cães',
     images: ['https://images.unsplash.com/photo-1589924691995-400dc9ecc119?w=800&q=80'],
     weight: 15,
     brand: 'PremierPet',
@@ -36,8 +27,8 @@ const MOCK_PRODUCTS: HiperProduct[] = [
     promotionalPrice: 129.90,
     stock: 18,
     sku: 'GRANPLUS-GATO-10KG',
-    categoryId: 'cat-pets',
-    categoryName: 'Pets',
+    categoryId: 'cat-racao-gatos',
+    categoryName: 'Ração Gatos',
     images: ['https://images.unsplash.com/photo-1548767797-d8c844163c4c?w=800&q=80'],
     weight: 10,
     brand: 'GranPlus',
@@ -50,8 +41,8 @@ const MOCK_PRODUCTS: HiperProduct[] = [
     price: 24.90,
     stock: 40,
     sku: 'SHAMPOO-PET-500',
-    categoryId: 'cat-pets',
-    categoryName: 'Pets',
+    categoryId: 'cat-higiene-pet',
+    categoryName: 'Higiene Pet',
     images: ['https://images.unsplash.com/photo-1535294435445-d7249524ef2e?w=800&q=80'],
     weight: 0.5,
     brand: 'Pet Clean',
@@ -65,8 +56,8 @@ const MOCK_PRODUCTS: HiperProduct[] = [
     promotionalPrice: 109.90,
     stock: 30,
     sku: 'PEDIGREE-15KG',
-    categoryId: 'cat-pets',
-    categoryName: 'Pets',
+    categoryId: 'cat-racao-caes',
+    categoryName: 'Ração Cães',
     images: ['https://images.unsplash.com/photo-1601758228041-f3b2795255f1?w=800&q=80'],
     weight: 15,
     brand: 'Pedigree',
@@ -79,8 +70,8 @@ const MOCK_PRODUCTS: HiperProduct[] = [
     price: 39.90,
     stock: 50,
     sku: 'PIPICAT-12KG',
-    categoryId: 'cat-pets',
-    categoryName: 'Pets',
+    categoryId: 'cat-areia-gatos',
+    categoryName: 'Areia para Gatos',
     images: ['https://images.unsplash.com/photo-1574158622682-e40e69881006?w=800&q=80'],
     weight: 12,
     brand: 'Pipicat',
@@ -94,8 +85,8 @@ const MOCK_PRODUCTS: HiperProduct[] = [
     promotionalPrice: 169.90,
     stock: 12,
     sku: 'SERESTO-P',
-    categoryId: 'cat-pets',
-    categoryName: 'Pets',
+    categoryId: 'cat-farmacia-pet',
+    categoryName: 'Farmácia Pet',
     images: ['https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=800&q=80'],
     weight: 0.05,
     brand: 'Seresto',
@@ -108,8 +99,8 @@ const MOCK_PRODUCTS: HiperProduct[] = [
     price: 129.90,
     stock: 22,
     sku: 'WHISKAS-CAST-10KG',
-    categoryId: 'cat-pets',
-    categoryName: 'Pets',
+    categoryId: 'cat-racao-gatos',
+    categoryName: 'Ração Gatos',
     images: ['https://images.unsplash.com/photo-1526336024174-e58f5cdd8e13?w=800&q=80'],
     weight: 10.1,
     brand: 'Whiskas',
@@ -123,8 +114,8 @@ const MOCK_PRODUCTS: HiperProduct[] = [
     promotionalPrice: 42.90,
     stock: 35,
     sku: 'TAPETE-HIG-30',
-    categoryId: 'cat-pets',
-    categoryName: 'Pets',
+    categoryId: 'cat-higiene-pet',
+    categoryName: 'Higiene Pet',
     images: ['https://images.unsplash.com/photo-1583337130417-13104dec14a8?w=800&q=80'],
     weight: 2,
     brand: 'Super Secão',
@@ -133,6 +124,23 @@ const MOCK_PRODUCTS: HiperProduct[] = [
 ];
 
 const USE_MOCKS = process.env.USE_HIPER_MOCK === 'true' || !process.env.HIPER_API_KEY;
+
+/**
+ * Normalizes a category name to its mapped slug for filtering.
+ */
+function getCategorySlug(categoryName: string): string {
+  const normalized = categoryName.trim().toUpperCase();
+  const mapping = CATEGORY_MAPPING[normalized];
+  if (mapping) return mapping.slug;
+
+  // Fallback to generating a slug
+  return categoryName
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '');
+}
 
 /**
  * Normalizes raw HIPER ERP product payload into our internal HiperProduct structure.
@@ -170,6 +178,13 @@ function normalizeHiperProduct(raw: HiperRawProduct): HiperProduct {
     quantity: p.quantidade,
   }));
 
+  // Map the raw HIPER category to a friendly name using our mapping
+  const rawCatName = raw.categoria || 'Geral';
+  const normalized = rawCatName.trim().toUpperCase();
+  const mapping = CATEGORY_MAPPING[normalized];
+  const friendlyName = mapping?.name || rawCatName;
+  const catSlug = mapping?.slug || getCategorySlug(rawCatName);
+
   return {
     id: raw.id,
     name: raw.nome || 'Produto Rancho',
@@ -177,8 +192,8 @@ function normalizeHiperProduct(raw: HiperRawProduct): HiperProduct {
     price: raw.preco || 0,
     stock: raw.quantidadeEmEstoque || 0,
     sku: raw.codigoDeBarras || String(raw.codigo),
-    categoryId: raw.categoriaDoProdutoId || 'cat-geral',
-    categoryName: raw.categoria || 'Geral',
+    categoryId: raw.categoriaDoProdutoId || catSlug,
+    categoryName: friendlyName,
     images,
     weight: raw.peso || 0,
     brand: raw.marca || 'Rancho dos Pinheiros',
@@ -191,7 +206,33 @@ function normalizeHiperProduct(raw: HiperRawProduct): HiperProduct {
 }
 
 /**
- * Fetches products from HIPER ERP — ONLY syncs PETS category.
+ * Checks if a product matches a given category slug/id filter.
+ */
+function matchesCategory(product: HiperProduct, target: string): boolean {
+  const t = target.toLowerCase();
+
+  // "pets" or "cat-pets" = show ALL pets products
+  if (t === 'pets' || t === 'cat-pets') return true;
+
+  // Direct match on category ID
+  if (product.categoryId.toLowerCase() === t) return true;
+
+  // Match on the mapped slug
+  const productSlug = getCategorySlug(product.categoryName);
+  if (productSlug === t) return true;
+
+  // Partial match on category name for flexibility
+  const productCatNormalized = product.categoryName
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+  if (productCatNormalized.includes(t) || t.includes(productCatNormalized)) return true;
+
+  return false;
+}
+
+/**
+ * Fetches products from HIPER ERP — syncs all PETS sub-categories.
  * Falls back to mock data if API is unavailable or mocks are enabled.
  */
 export async function getProducts(
@@ -217,27 +258,14 @@ export async function getProducts(
       ? rawResponse.data
       : [];
 
-    // Filter: only ACTIVE, not REMOVED, and PETS category
+    // Filter: only ACTIVE, not REMOVED, and within PETS universe (all sub-categories)
     let products = rawList
       .filter((item) => !item.removido && item.ativo && isPetsCategory(item.categoria || ''))
       .map(normalizeHiperProduct);
 
-    // Additional category filter within PETS (subcategories)
+    // Category filter within PETS sub-categories
     if (categoryIdOrSlug) {
-      const target = categoryIdOrSlug.toLowerCase();
-      // If user is browsing "pets" category, show all pets products
-      if (target !== 'pets' && target !== 'cat-pets') {
-        products = products.filter(
-          (p) =>
-            p.categoryId.toLowerCase() === target ||
-            p.categoryName.toLowerCase().includes(target) ||
-            p.categoryName
-              .toLowerCase()
-              .normalize('NFD')
-              .replace(/[\u0300-\u036f]/g, '')
-              .replace(/[^a-z0-9]+/g, '-') === target
-        );
-      }
+      products = products.filter((p) => matchesCategory(p, categoryIdOrSlug));
     }
 
     if (search) {
@@ -252,7 +280,7 @@ export async function getProducts(
     }
 
     // If API returns zero PETS products, fall back to mocks
-    if (products.length === 0) {
+    if (products.length === 0 && !categoryIdOrSlug && !search) {
       console.warn('[HIPER] No PETS products found from API, using mock data as fallback');
       return getFilteredMocks(page, pageSize, categoryIdOrSlug, search);
     }
@@ -296,7 +324,7 @@ export async function getProductBySlug(id: string): Promise<HiperProduct | null>
       ? allProducts.produtos
       : (allProducts?.data || []);
 
-    // Only return products from PETS category
+    // Return products from any PETS sub-category
     const found = rawList.find(
       (p) => (p.id === id || String(p.codigo) === id || p.codigoDeBarras === id)
              && isPetsCategory(p.categoria || '')
@@ -319,19 +347,7 @@ function getFilteredMocks(
   let filtered = [...MOCK_PRODUCTS];
 
   if (categoryIdOrSlug) {
-    const target = categoryIdOrSlug.toLowerCase();
-    if (target !== 'pets' && target !== 'cat-pets') {
-      filtered = filtered.filter(
-        (p) =>
-          p.categoryId.toLowerCase() === target ||
-          p.categoryName.toLowerCase().includes(target) ||
-          p.categoryName
-            .toLowerCase()
-            .normalize('NFD')
-            .replace(/[\u0300-\u036f]/g, '')
-            .replace(/[^a-z0-9]+/g, '-') === target
-      );
-    }
+    filtered = filtered.filter((p) => matchesCategory(p, categoryIdOrSlug));
   }
 
   if (search) {
