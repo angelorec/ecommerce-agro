@@ -9,16 +9,19 @@ import Link from "next/link";
 async function CategoryNavLinks() {
   const categories = await getCategories();
 
-  // Show first 6 categories max in the nav bar (they're already sorted by product count)
-  const topCategories = categories.slice(0, 6);
+  // Show top categories in the nav bar (sorted by display order from getCategories)
+  // Group into: PETS subs, then others — max ~8 items
+  const petsCategories = categories.filter(c => c.parentId === 'pets').slice(0, 5);
+  const otherCategories = categories.filter(c => !c.parentId && c.slug !== 'pets').slice(0, 3);
+  const topCategories = [...petsCategories, ...otherCategories];
 
   return (
-    <ul className="flex items-center justify-center gap-6 lg:gap-8 h-11 overflow-x-auto">
+    <ul className="flex items-center justify-center gap-4 lg:gap-6 h-11 overflow-x-auto scrollbar-hide">
       {topCategories.map(({ slug, name }) => (
         <li key={slug} className="flex-shrink-0">
           <Link
             href={`/categorias/${slug}`}
-            className="text-sm font-semibold text-brand-dark hover:text-brand-forest transition-colors uppercase tracking-wide whitespace-nowrap"
+            className="text-[13px] font-semibold text-brand-dark hover:text-brand-forest transition-colors uppercase tracking-wide whitespace-nowrap"
           >
             {name}
           </Link>
@@ -27,7 +30,7 @@ async function CategoryNavLinks() {
       <li className="flex-shrink-0">
         <Link
           href="/categorias/ofertas"
-          className="text-sm font-semibold text-brand-red hover:text-brand-red/80 transition-colors uppercase tracking-wide whitespace-nowrap"
+          className="text-[13px] font-semibold text-brand-red hover:text-brand-red/80 transition-colors uppercase tracking-wide whitespace-nowrap"
         >
           🔥 Ofertas
         </Link>
@@ -35,9 +38,9 @@ async function CategoryNavLinks() {
       <li className="flex-shrink-0">
         <Link
           href="/produtos"
-          className="text-sm font-extrabold text-brand-forest hover:opacity-80 transition-opacity uppercase tracking-wide whitespace-nowrap"
+          className="text-[13px] font-extrabold text-brand-forest hover:opacity-80 transition-opacity uppercase tracking-wide whitespace-nowrap"
         >
-          Todos os Produtos
+          Ver Tudo
         </Link>
       </li>
     </ul>
@@ -49,8 +52,8 @@ async function CategoryNavLinks() {
  */
 function CategoryNavFallback() {
   return (
-    <ul className="flex items-center justify-center gap-6 lg:gap-8 h-11">
-      {Array.from({ length: 5 }).map((_, i) => (
+    <ul className="flex items-center justify-center gap-4 lg:gap-6 h-11">
+      {Array.from({ length: 6 }).map((_, i) => (
         <li key={i} className="flex-shrink-0">
           <div className="h-4 w-20 bg-gray-200 rounded animate-pulse" />
         </li>
@@ -58,7 +61,7 @@ function CategoryNavFallback() {
       <li className="flex-shrink-0">
         <Link
           href="/categorias/ofertas"
-          className="text-sm font-semibold text-brand-red hover:text-brand-red/80 transition-colors uppercase tracking-wide whitespace-nowrap"
+          className="text-[13px] font-semibold text-brand-red uppercase tracking-wide whitespace-nowrap"
         >
           🔥 Ofertas
         </Link>
@@ -66,9 +69,9 @@ function CategoryNavFallback() {
       <li className="flex-shrink-0">
         <Link
           href="/produtos"
-          className="text-sm font-extrabold text-brand-forest hover:opacity-80 transition-opacity uppercase tracking-wide whitespace-nowrap"
+          className="text-[13px] font-extrabold text-brand-forest uppercase tracking-wide whitespace-nowrap"
         >
-          Todos os Produtos
+          Ver Tudo
         </Link>
       </li>
     </ul>

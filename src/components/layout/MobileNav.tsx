@@ -53,11 +53,15 @@ export function MobileNav() {
       .catch(() => {
         // Fallback if API fails
         setCategories([
-          { id: "cat-racao-caes", name: "Ração Cães", slug: "racao-caes" },
-          { id: "cat-racao-gatos", name: "Ração Gatos", slug: "racao-gatos" },
-          { id: "cat-higiene-pet", name: "Higiene Pet", slug: "higiene-pet" },
-          { id: "cat-acessorios-pet", name: "Acessórios Pet", slug: "acessorios-pet" },
-          { id: "cat-farmacia-pet", name: "Farmácia Pet", slug: "farmacia-pet" },
+          { id: "cat-racoes-cao", name: "Rações Cão", slug: "racoes-cao", parentId: "pets" },
+          { id: "cat-racoes-gato", name: "Rações Gato", slug: "racoes-gato", parentId: "pets" },
+          { id: "cat-petiscos", name: "Petiscos", slug: "petiscos", parentId: "pets" },
+          { id: "cat-acessorios-brinquedos", name: "Acessórios & Brinquedos", slug: "acessorios-brinquedos", parentId: "pets" },
+          { id: "cat-higiene-banho", name: "Higiene & Banho", slug: "higiene-banho", parentId: "pets" },
+          { id: "cat-vermifugos", name: "Vermífugos", slug: "vermifugos" },
+          { id: "cat-passaros", name: "Pássaros", slug: "passaros" },
+          { id: "cat-peixes", name: "Peixes", slug: "peixes" },
+          { id: "cat-racoes-avicola", name: "Rações Avícola", slug: "racoes-avicola" },
         ]);
       });
   }, [isOpen, categories.length]);

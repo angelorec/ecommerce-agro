@@ -2,86 +2,126 @@ import { fetchHiperAPI } from './client';
 import { HiperCategory, HiperRawProduct } from './types';
 
 /**
- * PETS sub-categories as configured in HIPER ERP.
- * The system now pulls sub-categories dynamically from products,
- * grouping them into user-friendly buckets.
+ * ══════════════════════════════════════════════════════════════════════
+ * HIPER CATEGORY MAPPING — Based on the exact hierarchy from HIPER ERP
+ * ══════════════════════════════════════════════════════════════════════
  *
- * Known HIPER PETS sub-categories (mapped to friendly names):
- *   PETS, RAÇÃO CÃES, RAÇÃO GATOS, HIGIENE PET, ACESSÓRIOS PET,
- *   FARMÁCIA PET, PETISCOS CÃES, PETISCOS GATOS, AREIA GATOS,
- *   COLEIRAS E GUIAS, CAMAS E CASAS, BRINQUEDOS PET, etc.
+ * HIPER hierarchy (from the screenshot):
+ *
+ *   PASSÁROS
+ *     └─ Gaiolas
+ *   PEIXES
+ *   PETS
+ *     ├─ Acessórios/ Brinquedos  → PETS
+ *     ├─ Higiene & Banho
+ *     ├─ Pesticos                → PETS
+ *     ├─ Rações Cão              → PETS
+ *     └─ Rações Gato             → PETS
+ *   Pássaros ON
+ *   Rações Avícola
+ *   Vermífugos
+ *
+ * Each entry maps a raw HIPER category name (uppercased) to:
+ *   - slug:   URL-safe identifier
+ *   - name:   User-friendly display name
+ *   - parent: Parent group slug (for hierarchy) or null if top-level
  */
 
-/**
- * Maps raw HIPER category names to friendly, grouped slugs/names.
- * Categories that contain similar products are merged into one.
- */
-const CATEGORY_MAPPING: Record<string, { slug: string; name: string; group: string }> = {
-  'PETS': { slug: 'pets', name: 'Todos os Pets', group: 'all' },
-  // Cães
-  'RAÇÃO CÃES': { slug: 'racao-caes', name: 'Ração Cães', group: 'caes' },
-  'RAÇÕES CÃES': { slug: 'racao-caes', name: 'Ração Cães', group: 'caes' },
-  'RACOES CAES': { slug: 'racao-caes', name: 'Ração Cães', group: 'caes' },
-  'RAÇÃO CÃOS': { slug: 'racao-caes', name: 'Ração Cães', group: 'caes' },
-  'PETISCOS CÃES': { slug: 'petiscos-caes', name: 'Petiscos Cães', group: 'caes' },
-  'PETISCOS CAES': { slug: 'petiscos-caes', name: 'Petiscos Cães', group: 'caes' },
-  // Gatos
-  'RAÇÃO GATOS': { slug: 'racao-gatos', name: 'Ração Gatos', group: 'gatos' },
-  'RAÇÕES GATOS': { slug: 'racao-gatos', name: 'Ração Gatos', group: 'gatos' },
-  'RACOES GATOS': { slug: 'racao-gatos', name: 'Ração Gatos', group: 'gatos' },
-  'PETISCOS GATOS': { slug: 'petiscos-gatos', name: 'Petiscos Gatos', group: 'gatos' },
-  'AREIA GATOS': { slug: 'areia-gatos', name: 'Areia para Gatos', group: 'gatos' },
-  'AREIA GATO': { slug: 'areia-gatos', name: 'Areia para Gatos', group: 'gatos' },
-  'AREIAS GATOS': { slug: 'areia-gatos', name: 'Areia para Gatos', group: 'gatos' },
-  // Higiene & Saúde
-  'HIGIENE PET': { slug: 'higiene-pet', name: 'Higiene Pet', group: 'higiene' },
-  'HIGIENE E BELEZA PET': { slug: 'higiene-pet', name: 'Higiene Pet', group: 'higiene' },
-  'FARMÁCIA PET': { slug: 'farmacia-pet', name: 'Farmácia Pet', group: 'saude' },
-  'FARMACIA PET': { slug: 'farmacia-pet', name: 'Farmácia Pet', group: 'saude' },
-  'SAÚDE PET': { slug: 'farmacia-pet', name: 'Farmácia Pet', group: 'saude' },
-  'SAUDE PET': { slug: 'farmacia-pet', name: 'Farmácia Pet', group: 'saude' },
-  'ANTIPULGAS E CARRAPATOS': { slug: 'antipulgas', name: 'Antipulgas e Carrapatos', group: 'saude' },
-  'ANTIPULGAS': { slug: 'antipulgas', name: 'Antipulgas e Carrapatos', group: 'saude' },
-  'VERMIFUGOS PET': { slug: 'farmacia-pet', name: 'Farmácia Pet', group: 'saude' },
-  'VERMÍFUGOS PET': { slug: 'farmacia-pet', name: 'Farmácia Pet', group: 'saude' },
-  // Acessórios
-  'ACESSÓRIOS PET': { slug: 'acessorios-pet', name: 'Acessórios Pet', group: 'acessorios' },
-  'ACESSORIOS PET': { slug: 'acessorios-pet', name: 'Acessórios Pet', group: 'acessorios' },
-  'COLEIRAS E GUIAS': { slug: 'coleiras-guias', name: 'Coleiras e Guias', group: 'acessorios' },
-  'COLEIRAS': { slug: 'coleiras-guias', name: 'Coleiras e Guias', group: 'acessorios' },
-  'BRINQUEDOS PET': { slug: 'brinquedos-pet', name: 'Brinquedos Pet', group: 'acessorios' },
-  'BRINQUEDOS': { slug: 'brinquedos-pet', name: 'Brinquedos Pet', group: 'acessorios' },
-  'CAMAS E CASAS': { slug: 'camas-casas', name: 'Camas e Casas', group: 'acessorios' },
-  'CAMAS': { slug: 'camas-casas', name: 'Camas e Casas', group: 'acessorios' },
-  'COMEDOUROS E BEBEDOUROS': { slug: 'comedouros-bebedouros', name: 'Comedouros e Bebedouros', group: 'acessorios' },
-  'COMEDOUROS': { slug: 'comedouros-bebedouros', name: 'Comedouros e Bebedouros', group: 'acessorios' },
-  'TAPETES HIGIÊNICOS': { slug: 'tapetes-higienicos', name: 'Tapetes Higiênicos', group: 'higiene' },
-  'TAPETES HIGIENICOS': { slug: 'tapetes-higienicos', name: 'Tapetes Higiênicos', group: 'higiene' },
-  'TAPETE HIGIÊNICO': { slug: 'tapetes-higienicos', name: 'Tapetes Higiênicos', group: 'higiene' },
-  // Transporte
-  'TRANSPORTE PET': { slug: 'transporte-pet', name: 'Transporte Pet', group: 'acessorios' },
-  'CAIXAS DE TRANSPORTE': { slug: 'transporte-pet', name: 'Transporte Pet', group: 'acessorios' },
+const CATEGORY_MAPPING: Record<string, { slug: string; name: string; parent: string | null }> = {
+  // ── PETS sub-categories ──────────────────────────────────────────
+  'PETS':                       { slug: 'pets',                  name: 'Todos os Pets',          parent: null },
+  'RAÇÕES CÃO':                { slug: 'racoes-cao',            name: 'Rações Cão',             parent: 'pets' },
+  'RACOES CAO':                 { slug: 'racoes-cao',            name: 'Rações Cão',             parent: 'pets' },
+  'RAÇÕES CÃ0':                { slug: 'racoes-cao',            name: 'Rações Cão',             parent: 'pets' },
+  'RAÇÃO CÃO':                 { slug: 'racoes-cao',            name: 'Rações Cão',             parent: 'pets' },
+  'RACAO CAO':                  { slug: 'racoes-cao',            name: 'Rações Cão',             parent: 'pets' },
+  'RAÇÃO CÃES':                 { slug: 'racoes-cao',            name: 'Rações Cão',             parent: 'pets' },
+  'RAÇÕES CÃES':                { slug: 'racoes-cao',            name: 'Rações Cão',             parent: 'pets' },
+  'RACOES CAES':                { slug: 'racoes-cao',            name: 'Rações Cão',             parent: 'pets' },
+
+  'RAÇÕES GATO':               { slug: 'racoes-gato',           name: 'Rações Gato',            parent: 'pets' },
+  'RACOES GATO':                { slug: 'racoes-gato',           name: 'Rações Gato',            parent: 'pets' },
+  'RAÇÃO GATO':                 { slug: 'racoes-gato',           name: 'Rações Gato',            parent: 'pets' },
+  'RACAO GATO':                 { slug: 'racoes-gato',           name: 'Rações Gato',            parent: 'pets' },
+  'RAÇÃO GATOS':                { slug: 'racoes-gato',           name: 'Rações Gato',            parent: 'pets' },
+  'RAÇÕES GATOS':               { slug: 'racoes-gato',           name: 'Rações Gato',            parent: 'pets' },
+  'RACOES GATOS':               { slug: 'racoes-gato',           name: 'Rações Gato',            parent: 'pets' },
+
+  'PESTICOS':                   { slug: 'petiscos',              name: 'Petiscos',               parent: 'pets' },
+  'PETISCOS':                   { slug: 'petiscos',              name: 'Petiscos',               parent: 'pets' },
+  'PETISCOS CÃES':              { slug: 'petiscos',              name: 'Petiscos',               parent: 'pets' },
+  'PETISCOS CAES':              { slug: 'petiscos',              name: 'Petiscos',               parent: 'pets' },
+  'PETISCOS GATOS':             { slug: 'petiscos',              name: 'Petiscos',               parent: 'pets' },
+
+  'ACESSÓRIOS/ BRINQUEDOS':    { slug: 'acessorios-brinquedos', name: 'Acessórios & Brinquedos', parent: 'pets' },
+  'ACESSORIOS/ BRINQUEDOS':    { slug: 'acessorios-brinquedos', name: 'Acessórios & Brinquedos', parent: 'pets' },
+  'ACESSÓRIOS/BRINQUEDOS':     { slug: 'acessorios-brinquedos', name: 'Acessórios & Brinquedos', parent: 'pets' },
+  'ACESSORIOS/BRINQUEDOS':     { slug: 'acessorios-brinquedos', name: 'Acessórios & Brinquedos', parent: 'pets' },
+  'ACESSÓRIOS / BRINQUEDOS':   { slug: 'acessorios-brinquedos', name: 'Acessórios & Brinquedos', parent: 'pets' },
+  'ACESSORIOS / BRINQUEDOS':   { slug: 'acessorios-brinquedos', name: 'Acessórios & Brinquedos', parent: 'pets' },
+  'ACESSÓRIOS PET':             { slug: 'acessorios-brinquedos', name: 'Acessórios & Brinquedos', parent: 'pets' },
+  'ACESSORIOS PET':             { slug: 'acessorios-brinquedos', name: 'Acessórios & Brinquedos', parent: 'pets' },
+  'BRINQUEDOS PET':             { slug: 'acessorios-brinquedos', name: 'Acessórios & Brinquedos', parent: 'pets' },
+  'BRINQUEDOS':                 { slug: 'acessorios-brinquedos', name: 'Acessórios & Brinquedos', parent: 'pets' },
+
+  'HIGIENE & BANHO':           { slug: 'higiene-banho',         name: 'Higiene & Banho',        parent: 'pets' },
+  'HIGIENE E BANHO':           { slug: 'higiene-banho',         name: 'Higiene & Banho',        parent: 'pets' },
+  'HIGIENE PET':               { slug: 'higiene-banho',         name: 'Higiene & Banho',        parent: 'pets' },
+  'HIGIENE E BELEZA PET':      { slug: 'higiene-banho',         name: 'Higiene & Banho',        parent: 'pets' },
+
+  // ── PASSÁROS ─────────────────────────────────────────────────────
+  'PASSÁROS':                  { slug: 'passaros',              name: 'Pássaros',               parent: null },
+  'PASSAROS':                  { slug: 'passaros',              name: 'Pássaros',               parent: null },
+  'PÁSSAROS':                  { slug: 'passaros',              name: 'Pássaros',               parent: null },
+
+  'GAIOLAS':                   { slug: 'gaiolas',               name: 'Gaiolas',                parent: 'passaros' },
+
+  'PÁSSAROS ON':               { slug: 'passaros-on',           name: 'Pássaros ON',            parent: 'passaros' },
+  'PASSAROS ON':               { slug: 'passaros-on',           name: 'Pássaros ON',            parent: 'passaros' },
+
+  // ── PEIXES ───────────────────────────────────────────────────────
+  'PEIXES':                    { slug: 'peixes',                name: 'Peixes',                 parent: null },
+
+  // ── RAÇÕES AVÍCOLA ───────────────────────────────────────────────
+  'RAÇÕES AVÍCOLA':            { slug: 'racoes-avicola',        name: 'Rações Avícola',         parent: null },
+  'RACOES AVICOLA':            { slug: 'racoes-avicola',        name: 'Rações Avícola',         parent: null },
+  'RAÇÃO AVÍCOLA':             { slug: 'racoes-avicola',        name: 'Rações Avícola',         parent: null },
+  'RACAO AVICOLA':             { slug: 'racoes-avicola',        name: 'Rações Avícola',         parent: null },
+  'RAÇÕES AVICOLA':            { slug: 'racoes-avicola',        name: 'Rações Avícola',         parent: null },
+
+  // ── VERMÍFUGOS ───────────────────────────────────────────────────
+  'VERMÍFUGOS':                { slug: 'vermifugos',            name: 'Vermífugos',             parent: null },
+  'VERMIFUGOS':                { slug: 'vermifugos',            name: 'Vermífugos',             parent: null },
 };
 
 /**
- * List of HIPER category names that belong to the PETS universe.
- * Any product whose `categoria` (uppercase/trimmed) matches one of these
- * is displayed on the e-commerce.
+ * Set of ALL allowed HIPER category names (uppercased).
  */
-const PETS_UNIVERSE: Set<string> = new Set(Object.keys(CATEGORY_MAPPING));
+const ALLOWED_CATEGORIES: Set<string> = new Set(Object.keys(CATEGORY_MAPPING));
 
 /**
- * Returns true if a HIPER category name belongs to the PETS universe.
- * Works with both the old "PETS" category and the new sub-categories.
+ * Returns true if a HIPER category name is one of the allowed categories
+ * (PETS, Pássaros, Peixes, Avícola, Vermífugos and their sub-categories).
  */
-export function isPetsCategory(name: string): boolean {
+export function isAllowedCategory(name: string): boolean {
   const normalized = name.trim().toUpperCase();
-  if (PETS_UNIVERSE.has(normalized)) return true;
-  // Fallback: if the name contains "PET" or "CÃ" or "GAT" it's likely a PETS sub-category
-  if (normalized.includes('PET') || normalized.includes('CÃ') || normalized.includes('CAE')
-      || normalized.includes('GAT')) return true;
+  if (ALLOWED_CATEGORIES.has(normalized)) return true;
+
+  // Normalize accents and try again
+  const noAccents = normalized.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  if (ALLOWED_CATEGORIES.has(noAccents)) return true;
+
+  // Heuristic fallback for unknown variants
+  for (const key of ALLOWED_CATEGORIES) {
+    const keyNoAccents = key.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    if (keyNoAccents === noAccents) return true;
+  }
+
   return false;
 }
+
+/** @deprecated Use isAllowedCategory instead */
+export const isPetsCategory = isAllowedCategory;
 
 /**
  * Normalizes a raw HIPER category name into a friendly slug.
@@ -100,47 +140,81 @@ function toSlug(name: string): string {
  */
 function mapCategory(rawName: string, rawId: string): HiperCategory {
   const normalized = rawName.trim().toUpperCase();
-  const mapping = CATEGORY_MAPPING[normalized];
+  let mapping = CATEGORY_MAPPING[normalized];
+
+  // Try with accent normalization
+  if (!mapping) {
+    const noAccents = normalized.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    for (const [key, val] of Object.entries(CATEGORY_MAPPING)) {
+      const keyNoAccents = key.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+      if (keyNoAccents === noAccents) {
+        mapping = val;
+        break;
+      }
+    }
+  }
 
   if (mapping) {
     return {
       id: rawId || mapping.slug,
       name: mapping.name,
       slug: mapping.slug,
-      parentId: mapping.group !== 'all' ? 'pets' : undefined,
+      parentId: mapping.parent ?? undefined,
     };
   }
 
-  // Fallback for unknown PETS sub-categories
+  // Fallback for unknown categories
   const slug = toSlug(rawName);
   return {
     id: rawId || slug,
     name: rawName.trim(),
     slug,
-    parentId: 'pets',
+    parentId: undefined,
   };
 }
 
+/**
+ * Defines the preferred display order for categories.
+ * Categories appearing earlier in this list show first.
+ */
+const DISPLAY_ORDER: string[] = [
+  'racoes-cao',
+  'racoes-gato',
+  'petiscos',
+  'acessorios-brinquedos',
+  'higiene-banho',
+  'vermifugos',
+  'passaros',
+  'gaiolas',
+  'passaros-on',
+  'peixes',
+  'racoes-avicola',
+];
+
 // Fallback mock subcategories (only used when API is unavailable)
-const FALLBACK_SUBCATEGORIES: HiperCategory[] = [
-  { id: 'cat-racao-caes', name: 'Ração Cães', slug: 'racao-caes', parentId: 'pets' },
-  { id: 'cat-racao-gatos', name: 'Ração Gatos', slug: 'racao-gatos', parentId: 'pets' },
-  { id: 'cat-higiene-pet', name: 'Higiene Pet', slug: 'higiene-pet', parentId: 'pets' },
-  { id: 'cat-acessorios-pet', name: 'Acessórios Pet', slug: 'acessorios-pet', parentId: 'pets' },
-  { id: 'cat-farmacia-pet', name: 'Farmácia Pet', slug: 'farmacia-pet', parentId: 'pets' },
-  { id: 'cat-petiscos-caes', name: 'Petiscos Cães', slug: 'petiscos-caes', parentId: 'pets' },
+const FALLBACK_CATEGORIES: HiperCategory[] = [
+  { id: 'cat-racoes-cao',            name: 'Rações Cão',              slug: 'racoes-cao',            parentId: 'pets' },
+  { id: 'cat-racoes-gato',           name: 'Rações Gato',             slug: 'racoes-gato',           parentId: 'pets' },
+  { id: 'cat-petiscos',              name: 'Petiscos',                slug: 'petiscos',              parentId: 'pets' },
+  { id: 'cat-acessorios-brinquedos', name: 'Acessórios & Brinquedos', slug: 'acessorios-brinquedos', parentId: 'pets' },
+  { id: 'cat-higiene-banho',         name: 'Higiene & Banho',         slug: 'higiene-banho',         parentId: 'pets' },
+  { id: 'cat-vermifugos',            name: 'Vermífugos',              slug: 'vermifugos' },
+  { id: 'cat-passaros',              name: 'Pássaros',                slug: 'passaros' },
+  { id: 'cat-gaiolas',               name: 'Gaiolas',                 slug: 'gaiolas',               parentId: 'passaros' },
+  { id: 'cat-peixes',                name: 'Peixes',                  slug: 'peixes' },
+  { id: 'cat-racoes-avicola',        name: 'Rações Avícola',          slug: 'racoes-avicola' },
 ];
 
 const USE_MOCKS = process.env.USE_HIPER_MOCK === 'true' || !process.env.HIPER_API_KEY;
 
 /**
- * Fetches categories from HIPER ERP by extracting unique sub-categories
+ * Fetches categories from HIPER ERP by extracting unique categories
  * from actual products. Only returns categories that have at least 1 product.
  * Categories with zero products are automatically excluded.
  */
 export async function getCategories(): Promise<HiperCategory[]> {
   if (USE_MOCKS) {
-    return FALLBACK_SUBCATEGORIES;
+    return FALLBACK_CATEGORIES;
   }
 
   try {
@@ -150,52 +224,55 @@ export async function getCategories(): Promise<HiperCategory[]> {
     const produtos = Array.isArray(rawData) ? rawData : (rawData?.produtos || []);
 
     if (produtos.length === 0) {
-      return FALLBACK_SUBCATEGORIES;
+      return FALLBACK_CATEGORIES;
     }
 
-    // Only consider active, non-removed products in the PETS universe
-    const petsProducts = produtos.filter(
-      (p) => !p.removido && p.ativo && p.categoria && isPetsCategory(p.categoria)
+    // Only consider active, non-removed products in allowed categories
+    const allowedProducts = produtos.filter(
+      (p) => !p.removido && p.ativo && p.categoria && isAllowedCategory(p.categoria)
     );
 
-    if (petsProducts.length === 0) {
-      return FALLBACK_SUBCATEGORIES;
+    if (allowedProducts.length === 0) {
+      return FALLBACK_CATEGORIES;
     }
 
     // Extract unique categories from real products (only categories with products)
     const categoriesMap = new Map<string, { category: HiperCategory; productCount: number }>();
 
-    petsProducts.forEach((p) => {
+    allowedProducts.forEach((p) => {
       const mapped = mapCategory(p.categoria, p.categoriaDoProdutoId);
 
-      // Skip the generic "Todos os Pets" category — it's not a real sub-category
+      // Skip the generic "Todos os Pets" — not a browsable sub-category
       if (mapped.slug === 'pets') return;
 
       if (categoriesMap.has(mapped.slug)) {
-        const entry = categoriesMap.get(mapped.slug)!;
-        entry.productCount += 1;
+        categoriesMap.get(mapped.slug)!.productCount += 1;
       } else {
         categoriesMap.set(mapped.slug, { category: mapped, productCount: 1 });
       }
     });
 
-    // Sort by product count (most products first) for better UX
+    // Sort by preferred display order, then by product count for unknowns
     const sorted = Array.from(categoriesMap.values())
-      .sort((a, b) => b.productCount - a.productCount)
+      .sort((a, b) => {
+        const orderA = DISPLAY_ORDER.indexOf(a.category.slug);
+        const orderB = DISPLAY_ORDER.indexOf(b.category.slug);
+        const posA = orderA === -1 ? 999 : orderA;
+        const posB = orderB === -1 ? 999 : orderB;
+        if (posA !== posB) return posA - posB;
+        return b.productCount - a.productCount;
+      })
       .map(({ category }) => category);
 
     if (sorted.length === 0) {
-      return FALLBACK_SUBCATEGORIES;
+      return FALLBACK_CATEGORIES;
     }
 
     return sorted;
   } catch (error) {
     console.error('Error fetching categories from HIPER:', error);
-    return FALLBACK_SUBCATEGORIES;
+    return FALLBACK_CATEGORIES;
   }
 }
 
-/**
- * Gets the CATEGORY_MAPPING for use by other modules.
- */
-export { CATEGORY_MAPPING, PETS_UNIVERSE };
+export { CATEGORY_MAPPING, ALLOWED_CATEGORIES };

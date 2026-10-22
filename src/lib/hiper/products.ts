@@ -1,6 +1,6 @@
 import { fetchHiperAPI } from './client';
 import { HiperProduct, HiperRawProduct, PaginatedResponse } from './types';
-import { isPetsCategory, CATEGORY_MAPPING } from './categories';
+import { isAllowedCategory, CATEGORY_MAPPING } from './categories';
 
 // Mock catalog for when API is unavailable
 const MOCK_PRODUCTS: HiperProduct[] = [
@@ -12,8 +12,8 @@ const MOCK_PRODUCTS: HiperProduct[] = [
     promotionalPrice: 145.90,
     stock: 24,
     sku: 'GOLDEN-15KG',
-    categoryId: 'cat-racao-caes',
-    categoryName: 'Ração Cães',
+    categoryId: 'cat-racoes-cao',
+    categoryName: 'Rações Cão',
     images: ['https://images.unsplash.com/photo-1589924691995-400dc9ecc119?w=800&q=80'],
     weight: 15,
     brand: 'PremierPet',
@@ -27,8 +27,8 @@ const MOCK_PRODUCTS: HiperProduct[] = [
     promotionalPrice: 129.90,
     stock: 18,
     sku: 'GRANPLUS-GATO-10KG',
-    categoryId: 'cat-racao-gatos',
-    categoryName: 'Ração Gatos',
+    categoryId: 'cat-racoes-gato',
+    categoryName: 'Rações Gato',
     images: ['https://images.unsplash.com/photo-1548767797-d8c844163c4c?w=800&q=80'],
     weight: 10,
     brand: 'GranPlus',
@@ -41,8 +41,8 @@ const MOCK_PRODUCTS: HiperProduct[] = [
     price: 24.90,
     stock: 40,
     sku: 'SHAMPOO-PET-500',
-    categoryId: 'cat-higiene-pet',
-    categoryName: 'Higiene Pet',
+    categoryId: 'cat-higiene-banho',
+    categoryName: 'Higiene & Banho',
     images: ['https://images.unsplash.com/photo-1535294435445-d7249524ef2e?w=800&q=80'],
     weight: 0.5,
     brand: 'Pet Clean',
@@ -56,8 +56,8 @@ const MOCK_PRODUCTS: HiperProduct[] = [
     promotionalPrice: 109.90,
     stock: 30,
     sku: 'PEDIGREE-15KG',
-    categoryId: 'cat-racao-caes',
-    categoryName: 'Ração Cães',
+    categoryId: 'cat-racoes-cao',
+    categoryName: 'Rações Cão',
     images: ['https://images.unsplash.com/photo-1601758228041-f3b2795255f1?w=800&q=80'],
     weight: 15,
     brand: 'Pedigree',
@@ -70,8 +70,8 @@ const MOCK_PRODUCTS: HiperProduct[] = [
     price: 39.90,
     stock: 50,
     sku: 'PIPICAT-12KG',
-    categoryId: 'cat-areia-gatos',
-    categoryName: 'Areia para Gatos',
+    categoryId: 'cat-higiene-banho',
+    categoryName: 'Higiene & Banho',
     images: ['https://images.unsplash.com/photo-1574158622682-e40e69881006?w=800&q=80'],
     weight: 12,
     brand: 'Pipicat',
@@ -85,8 +85,8 @@ const MOCK_PRODUCTS: HiperProduct[] = [
     promotionalPrice: 169.90,
     stock: 12,
     sku: 'SERESTO-P',
-    categoryId: 'cat-farmacia-pet',
-    categoryName: 'Farmácia Pet',
+    categoryId: 'cat-vermifugos',
+    categoryName: 'Vermífugos',
     images: ['https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=800&q=80'],
     weight: 0.05,
     brand: 'Seresto',
@@ -99,8 +99,8 @@ const MOCK_PRODUCTS: HiperProduct[] = [
     price: 129.90,
     stock: 22,
     sku: 'WHISKAS-CAST-10KG',
-    categoryId: 'cat-racao-gatos',
-    categoryName: 'Ração Gatos',
+    categoryId: 'cat-racoes-gato',
+    categoryName: 'Rações Gato',
     images: ['https://images.unsplash.com/photo-1526336024174-e58f5cdd8e13?w=800&q=80'],
     weight: 10.1,
     brand: 'Whiskas',
@@ -114,8 +114,8 @@ const MOCK_PRODUCTS: HiperProduct[] = [
     promotionalPrice: 42.90,
     stock: 35,
     sku: 'TAPETE-HIG-30',
-    categoryId: 'cat-higiene-pet',
-    categoryName: 'Higiene Pet',
+    categoryId: 'cat-acessorios-brinquedos',
+    categoryName: 'Acessórios & Brinquedos',
     images: ['https://images.unsplash.com/photo-1583337130417-13104dec14a8?w=800&q=80'],
     weight: 2,
     brand: 'Super Secão',
@@ -211,8 +211,19 @@ function normalizeHiperProduct(raw: HiperRawProduct): HiperProduct {
 function matchesCategory(product: HiperProduct, target: string): boolean {
   const t = target.toLowerCase();
 
-  // "pets" or "cat-pets" = show ALL pets products
-  if (t === 'pets' || t === 'cat-pets') return true;
+  // "pets" = show all PETS sub-category products
+  if (t === 'pets' || t === 'cat-pets') {
+    const productSlug = getCategorySlug(product.categoryName);
+    const mapping = Object.values(CATEGORY_MAPPING).find(m => m.slug === productSlug);
+    return mapping?.parent === 'pets' || productSlug === 'pets';
+  }
+
+  // "passaros" = show all Pássaros sub-category products
+  if (t === 'passaros') {
+    const productSlug = getCategorySlug(product.categoryName);
+    const mapping = Object.values(CATEGORY_MAPPING).find(m => m.slug === productSlug);
+    return mapping?.parent === 'passaros' || productSlug === 'passaros';
+  }
 
   // Direct match on category ID
   if (product.categoryId.toLowerCase() === t) return true;
@@ -258,9 +269,9 @@ export async function getProducts(
       ? rawResponse.data
       : [];
 
-    // Filter: only ACTIVE, not REMOVED, and within PETS universe (all sub-categories)
+    // Filter: only ACTIVE, not REMOVED, and within allowed categories
     let products = rawList
-      .filter((item) => !item.removido && item.ativo && isPetsCategory(item.categoria || ''))
+      .filter((item) => !item.removido && item.ativo && isAllowedCategory(item.categoria || ''))
       .map(normalizeHiperProduct);
 
     // Category filter within PETS sub-categories
@@ -279,9 +290,9 @@ export async function getProducts(
       );
     }
 
-    // If API returns zero PETS products, fall back to mocks
+    // If API returns zero products, fall back to mocks
     if (products.length === 0 && !categoryIdOrSlug && !search) {
-      console.warn('[HIPER] No PETS products found from API, using mock data as fallback');
+      console.warn('[HIPER] No products found from API, using mock data as fallback');
       return getFilteredMocks(page, pageSize, categoryIdOrSlug, search);
     }
 
@@ -324,10 +335,10 @@ export async function getProductBySlug(id: string): Promise<HiperProduct | null>
       ? allProducts.produtos
       : (allProducts?.data || []);
 
-    // Return products from any PETS sub-category
+    // Return products from any allowed category
     const found = rawList.find(
       (p) => (p.id === id || String(p.codigo) === id || p.codigoDeBarras === id)
-             && isPetsCategory(p.categoria || '')
+             && isAllowedCategory(p.categoria || '')
     );
 
     if (!found) return null;
