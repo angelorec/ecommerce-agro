@@ -10,12 +10,13 @@ import {
 } from "@phosphor-icons/react";
 import { AnimatePresence, motion } from "motion/react";
 
-interface CategoryItem {
-  id: string;
-  name: string;
-  slug: string;
-  parentId?: string;
-}
+const PETS_SUBCATEGORIES = [
+  { slug: "acessorios-brinquedos", name: "Acessórios" },
+  { slug: "higiene-banho",         name: "Higiene & Banho" },
+  { slug: "petiscos",              name: "Petiscos" },
+  { slug: "racoes-cao",            name: "Rações de Cães" },
+  { slug: "racoes-gato",           name: "Rações de Gato" },
+];
 
 const emptySubscribe = () => () => {};
 function useHydrated() {
@@ -35,36 +36,11 @@ const STATIC_NAV_BOTTOM = [
 
 export function MobileNav() {
   const [isOpen, setIsOpen] = useState(false);
-  const [categories, setCategories] = useState<CategoryItem[]>([]);
   const { getTotalItems, toggleCart } = useCart();
   const mounted = useHydrated();
 
   const totalItems = mounted ? getTotalItems() : 0;
 
-  // Fetch categories dynamically when drawer opens
-  useEffect(() => {
-    if (!isOpen || categories.length > 0) return;
-
-    fetch("/api/categories")
-      .then((res) => res.json())
-      .then((data: CategoryItem[]) => {
-        if (Array.isArray(data)) setCategories(data);
-      })
-      .catch(() => {
-        // Fallback if API fails
-        setCategories([
-          { id: "cat-racoes-cao", name: "Rações Cão", slug: "racoes-cao", parentId: "pets" },
-          { id: "cat-racoes-gato", name: "Rações Gato", slug: "racoes-gato", parentId: "pets" },
-          { id: "cat-petiscos", name: "Petiscos", slug: "petiscos", parentId: "pets" },
-          { id: "cat-acessorios-brinquedos", name: "Acessórios & Brinquedos", slug: "acessorios-brinquedos", parentId: "pets" },
-          { id: "cat-higiene-banho", name: "Higiene & Banho", slug: "higiene-banho", parentId: "pets" },
-          { id: "cat-vermifugos", name: "Vermífugos", slug: "vermifugos" },
-          { id: "cat-passaros", name: "Pássaros", slug: "passaros" },
-          { id: "cat-peixes", name: "Peixes", slug: "peixes" },
-          { id: "cat-racoes-avicola", name: "Rações Avícola", slug: "racoes-avicola" },
-        ]);
-      });
-  }, [isOpen, categories.length]);
 
   // Lock scroll when open
   useEffect(() => {
@@ -153,28 +129,33 @@ export function MobileNav() {
                   </li>
                 ))}
 
-                {/* Dynamic categories section */}
-                {categories.length > 0 && (
-                  <>
-                    <li className="px-4 pt-4 pb-1">
-                      <span className="text-[10px] font-bold uppercase tracking-widest text-white/40">
-                        Categorias
-                      </span>
-                    </li>
-                    {categories.map((cat) => (
-                      <li key={cat.id}>
-                        <Link
-                          href={`/categorias/${cat.slug}`}
-                          onClick={() => setIsOpen(false)}
-                          className="flex items-center gap-3 px-4 py-3 rounded-lg font-semibold text-sm text-white/80 hover:bg-white/10 hover:text-white transition-colors"
-                        >
-                          <PawPrint size={20} className="text-brand-gold" />
-                          {cat.name}
-                        </Link>
-                      </li>
-                    ))}
-                  </>
-                )}
+                {/* PETS category with subcategories */}
+                <li className="px-4 pt-4 pb-1">
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-white/40">
+                    Categorias
+                  </span>
+                </li>
+                <li>
+                  <Link
+                    href="/categorias/pets"
+                    onClick={() => setIsOpen(false)}
+                    className="flex items-center gap-3 px-4 py-3 rounded-lg font-bold text-sm text-white hover:bg-white/10 transition-colors"
+                  >
+                    <PawPrint size={20} weight="fill" className="text-brand-gold" />
+                    PETS
+                  </Link>
+                </li>
+                {PETS_SUBCATEGORIES.map((sub) => (
+                  <li key={sub.slug}>
+                    <Link
+                      href={`/categorias/${sub.slug}`}
+                      onClick={() => setIsOpen(false)}
+                      className="flex items-center gap-3 pl-11 pr-4 py-2.5 rounded-lg font-medium text-sm text-white/60 hover:bg-white/10 hover:text-white transition-colors"
+                    >
+                      {sub.name}
+                    </Link>
+                  </li>
+                ))}
 
                 {/* Divider */}
                 <li className="px-4 pt-3 pb-1">
