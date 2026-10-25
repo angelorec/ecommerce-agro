@@ -1,6 +1,6 @@
 import { fetchHiperAPI } from './client';
 import { HiperProduct, HiperRawProduct, PaginatedResponse } from './types';
-import { isAllowedCategory, CATEGORY_MAPPING } from './categories';
+import { isAllowedCategory, CATEGORY_MAPPING, resolveSubcategoryFromId } from './categories';
 
 // Mock catalog for when API is unavailable
 const MOCK_PRODUCTS: HiperProduct[] = [
@@ -178,12 +178,26 @@ function normalizeHiperProduct(raw: HiperRawProduct): HiperProduct {
     quantity: p.quantidade,
   }));
 
-  // Map the raw HIPER category to a friendly name using our mapping
+  // Map the raw HIPER category to a friendly name using our mapping.
+  // CRITICAL: For products with `categoria: "PETS"` (the generic parent),
+  // resolve the actual subcategory using the `categoriaDoProdutoId` UUID.
   const rawCatName = raw.categoria || 'Geral';
   const normalized = rawCatName.trim().toUpperCase();
-  const mapping = CATEGORY_MAPPING[normalized];
-  const friendlyName = mapping?.name || rawCatName;
-  const catSlug = mapping?.slug || getCategorySlug(rawCatName);
+  const subcatFromId = resolveSubcategoryFromId(raw.categoriaDoProdutoId);
+
+  let friendlyName: string;
+  let catSlug: string;
+
+  if (normalized === 'PETS' && subcatFromId) {
+    // Subcategory resolved from categoriaDoProdutoId UUID
+    friendlyName = subcatFromId.name;
+    catSlug = subcatFromId.slug;
+  } else {
+    // Standard mapping from category name
+    const mapping = CATEGORY_MAPPING[normalized];
+    friendlyName = mapping?.name || rawCatName;
+    catSlug = mapping?.slug || getCategorySlug(rawCatName);
+  }
 
   return {
     id: raw.id,
@@ -207,30 +221,37 @@ function normalizeHiperProduct(raw: HiperRawProduct): HiperProduct {
 
 /**
  * Checks if a product matches a given category slug/id filter.
+ * Products have been normalized so their categoryName is the resolved
+ * subcategory (e.g. "Rações Cão") rather than the generic "PETS".
  */
 function matchesCategory(product: HiperProduct, target: string): boolean {
   const t = target.toLowerCase();
+  const productSlug = getCategorySlug(product.categoryName);
 
   // "pets" = show all PETS sub-category products
   if (t === 'pets' || t === 'cat-pets') {
-    const productSlug = getCategorySlug(product.categoryName);
+    const PETS_SUBCATEGORY_SLUGS = [
+      'racoes-cao', 'racoes-gato', 'petiscos',
+      'acessorios-brinquedos', 'higiene-banho', 'pets',
+    ];
+    if (PETS_SUBCATEGORY_SLUGS.includes(productSlug)) return true;
+
+    // Fallback: check CATEGORY_MAPPING parent
     const mapping = Object.values(CATEGORY_MAPPING).find(m => m.slug === productSlug);
     return mapping?.parent === 'pets' || productSlug === 'pets';
   }
 
   // "passaros" = show all Pássaros sub-category products
   if (t === 'passaros') {
-    const productSlug = getCategorySlug(product.categoryName);
     const mapping = Object.values(CATEGORY_MAPPING).find(m => m.slug === productSlug);
     return mapping?.parent === 'passaros' || productSlug === 'passaros';
   }
 
+  // Direct match on the resolved slug
+  if (productSlug === t) return true;
+
   // Direct match on category ID
   if (product.categoryId.toLowerCase() === t) return true;
-
-  // Match on the mapped slug
-  const productSlug = getCategorySlug(product.categoryName);
-  if (productSlug === t) return true;
 
   // Partial match on category name for flexibility
   const productCatNormalized = product.categoryName

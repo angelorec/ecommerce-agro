@@ -100,6 +100,56 @@ const CATEGORY_MAPPING: Record<string, { slug: string; name: string; parent: str
 const ALLOWED_CATEGORIES: Set<string> = new Set(Object.keys(CATEGORY_MAPPING));
 
 /**
+ * ══════════════════════════════════════════════════════════════════════
+ * HIPER SUBCATEGORY ID MAP — Maps `categoriaDoProdutoId` UUIDs to slugs
+ * ══════════════════════════════════════════════════════════════════════
+ *
+ * In the HIPER ERP, ALL products under the PETS tree have their
+ * `categoria` field set to "PETS" (the top-level group). The ACTUAL
+ * subcategory (Rações Cão, Rações Gato, Petiscos, etc.) is only
+ * identifiable via the `categoriaDoProdutoId` UUID.
+ *
+ * This mapping was built by analyzing all PETS products and grouping
+ * them by `categoriaDoProdutoId`, then manually verifying the product
+ * names to confirm each UUID's corresponding subcategory.
+ *
+ * When HIPER adds new subcategory IDs, they must be added here.
+ * Use the /api/debug-categories3 route (temporary) to discover them.
+ */
+const HIPER_SUBCATEGORY_ID_MAP: Record<string, { slug: string; name: string }> = {
+  // ── Rações Cão ──────────────────────────────────────────────────
+  'ff071bca-dbef-4728-99f2-b65840fb5535': { slug: 'racoes-cao',            name: 'Rações Cão' },
+  '6d274086-5d10-42d9-b0e9-405a9846a28f': { slug: 'racoes-cao',            name: 'Rações Cão' },
+
+  // ── Rações Gato ─────────────────────────────────────────────────
+  'c528d0bc-0be5-4f36-89ba-9c70d561e1e8': { slug: 'racoes-gato',           name: 'Rações Gato' },
+
+  // ── Acessórios / Brinquedos ─────────────────────────────────────
+  '2331e1c2-bd2f-43d0-b5fe-a47bb88160a5': { slug: 'acessorios-brinquedos', name: 'Acessórios & Brinquedos' },
+  'f84b3560-8159-465c-9a16-712832b0af4b': { slug: 'acessorios-brinquedos', name: 'Acessórios & Brinquedos' },
+
+  // ── Petiscos ────────────────────────────────────────────────────
+  '396de921-e47c-4107-a90e-7dad5efa07c0': { slug: 'petiscos',              name: 'Petiscos' },
+
+  // ── Higiene & Banho ─────────────────────────────────────────────
+  '379491d8-5cf9-4a5f-803d-8f183f015abc': { slug: 'higiene-banho',         name: 'Higiene & Banho' },
+
+  // ── Genérico / Teste (classified as Rações Cão by default) ──────
+  '2badab5c-e13b-47fc-8f61-2f53efcc3a8f': { slug: 'racoes-cao',            name: 'Rações Cão' },
+};
+
+/**
+ * Resolves a HIPER `categoriaDoProdutoId` to the actual subcategory
+ * slug and name. Returns null if the ID is not mapped.
+ */
+export function resolveSubcategoryFromId(
+  categoriaDoProdutoId: string | null | undefined
+): { slug: string; name: string } | null {
+  if (!categoriaDoProdutoId) return null;
+  return HIPER_SUBCATEGORY_ID_MAP[categoriaDoProdutoId] ?? null;
+}
+
+/**
  * Returns true if a HIPER category name is one of the allowed categories
  * (PETS, Pássaros, Peixes, Avícola, Vermífugos and their sub-categories).
  */
@@ -240,7 +290,23 @@ export async function getCategories(): Promise<HiperCategory[]> {
     const categoriesMap = new Map<string, { category: HiperCategory; productCount: number }>();
 
     allowedProducts.forEach((p) => {
-      const mapped = mapCategory(p.categoria, p.categoriaDoProdutoId);
+      let mapped: HiperCategory;
+
+      // For PETS products, try to resolve the real subcategory from the UUID
+      const normalized = p.categoria.trim().toUpperCase();
+      const subcatFromId = resolveSubcategoryFromId(p.categoriaDoProdutoId);
+
+      if (normalized === 'PETS' && subcatFromId) {
+        // Use the resolved subcategory
+        mapped = {
+          id: p.categoriaDoProdutoId || subcatFromId.slug,
+          name: subcatFromId.name,
+          slug: subcatFromId.slug,
+          parentId: 'pets',
+        };
+      } else {
+        mapped = mapCategory(p.categoria, p.categoriaDoProdutoId);
+      }
 
       // Skip the generic "Todos os Pets" — not a browsable sub-category
       if (mapped.slug === 'pets') return;
